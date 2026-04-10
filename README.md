@@ -2,11 +2,11 @@
 
 ### Founder of Minsi AI | Student builder exploring affective computing, AI products, and digital identity
 
-I’m a student builder creating AI products that support emotional well-being, self-reflection, and healthy digital identity for young people.Currently studying at **Guangzhou Foreign Language School**.
+I’m a student builder creating AI products that support emotional well-being, self-reflection, and healthy digital identity for young people.
+
+Currently studying at **Guangzhou Foreign Language School**.
 
 I’m especially interested in creating thoughtful technology for young people who think deeply, grow quietly, and need space to breathe.
-
----
 
 ## 🛠️ What I'm building
 
@@ -20,8 +20,6 @@ Exploring how large language models can be used in empathetic conversations, jou
 ### 🏆 Competitive Programming
 Practicing problem solving through **USACO** and **CCC**, with a focus on algorithms, logic, and clean implementation in **Java** and **C++**.
 
----
-
 ## 🚀 Featured Projects
 
 ### [Minsi AI](https://minsi.ai)
@@ -33,8 +31,6 @@ A student-focused AI platform for emotional support, reflection, and healthy dig
 A conversational AI experiment designed to support self-reflection and empathetic interaction.  
 **Tech:** JavaScript · OpenAI  
 **Focus:** Prompt design, conversation flow, and emotional UX
-
----
 
 ## 💻 Tech Stack
 
@@ -52,8 +48,6 @@ Tools I currently explore for prototyping and product experimentation:
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![Git](https://img.shields.io/badge/Git-F05033?style=for-the-badge&logo=git&logoColor=white)
 
----
-
 ## 📚 Currently Learning
 
 - Affective computing and emotion-centered product design
@@ -61,18 +55,10 @@ Tools I currently explore for prototyping and product experimentation:
 - Full-stack web building with Next.js
 - Stronger algorithmic thinking through competitive programming
 
----
-
 ## 📫 Let's Connect
 
 [![Website](https://img.shields.io/badge/Website-minsi.ai-34A853?style=for-the-badge&logo=google-chrome&logoColor=white)](https://minsi.ai)
 [![Twitter](https://img.shields.io/badge/Twitter-@Minsi__AI-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/Minsi_AI)
-[![Email](https://img.shields.io/badge/Email-minsi@minsi.ai-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:minsi@minsi.ai)
-
----
+[![Email](https://img.shields.io/badge/Email-minsi.wang@minsi.ai-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:minsi@minsi.ai)
 
 > Building AI with empathy, for students who need space to breathe.
----
-<p align="center">
-  <img src="https://komarev.com/ghpvc/?username=MinsiAI&color=blueviolet&style=flat-square" alt="Visitor Count" />
-</p>
