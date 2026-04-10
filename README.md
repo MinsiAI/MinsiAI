@@ -59,6 +59,6 @@ Tools I currently explore for prototyping and product experimentation:
 
 [![Website](https://img.shields.io/badge/Website-minsi.ai-34A853?style=for-the-badge&logo=google-chrome&logoColor=white)](https://minsi.ai)
 [![Twitter](https://img.shields.io/badge/Twitter-@Minsi__AI-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/Minsi_AI)
-[![Email](https://img.shields.io/badge/Email-minsi.wang@minsi.ai-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:minsi@minsi.ai)
+[![Email](https://img.shields.io/badge/Email-minsi@minsi.ai-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:minsi@minsi.ai)
 
 > Building AI with empathy, for students who need space to breathe.
