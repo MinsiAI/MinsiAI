@@ -1,16 +1,28 @@
-## Hi there 👋
+# Hi there, I'm Minsi 👋
 
-<!--
-**MinsiAI/MinsiAI** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+### 🚀 Founder of Minsi AI | High School Freshman | Affective Computing Enthusiast
 
-Here are some ideas to get you started:
+I am a student at **Guangzhou Foreign Language School (International Division)**, dedicated to creating a safe digital haven for youth who shine in solitude through technology and empathy.
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+---
+
+### 🛠️ What I'm working on
+- 🌟 **minsi.ai**: Developing an AI-powered emotional healing platform to help students manage stress and mental well-being.
+
+- 🏆 **Competitive Programming**: Actively participating in USACO and CCC (Canadian Computing Competition) to sharpen my algorithmic thinking.
+
+### 💻 My Tech Stack
+![Java](https://img.shields.io/badge/java-%23ED8B00.svg?style=for-the-badge&logo=openjdk&logoColor=white)
+![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+![Next.js](https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
+
+### 📊 GitHub Stats
+![Minsi's GitHub stats](https://github-readme-stats.vercel.app/api?username=MinsiAI&show_icons=true&theme=transparent)
+![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=MinsiAI&layout=compact&theme=transparent)
+
+### 📫 Connect with me
+- 🌐 Website: [minsi.ai](https://minsi.ai)
+- 🐦 Twitter: [@Minsi_AI](https://x.com/Minsi_AI)
+- 📧 Email: [minsi.ai@outlook.com](mailto:minsi.ai@outlook.com)
