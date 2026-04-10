@@ -7,7 +7,7 @@ I am a student at **Guangzhou Foreign Language School (International Division)**
 ---
 
 ### 🏆 What I'm working on
-- 🌟 **minsi.ai**: Developing an AI-powered emotional healing platform to help students manage stress and mental well-being.
+* 🌟 **[minsi.ai](https://minsi.ai)**: Developing an AI-powered emotional healing platform to help students manage stress and mental well-being.
 
 - 🏆 Competitive Programming: Active in USACO & CCC (Scored 67/75 in 2026 Junior division).
 
