@@ -24,8 +24,14 @@ I am a student at **Guangzhou Foreign Language School (International Division)**
 ![Git](https://img.shields.io/badge/git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white)
 
 ### 📊 GitHub Stats
-![Minsi's GitHub stats](https://github-readme-stats.vercel.app/api?username=MinsiAI&show_icons=true&theme=transparent)
-![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=MinsiAI&layout=compact&theme=transparent)
+<p align="left">
+  <a href="https://github.com/MinsiAI">
+    <img height="180em" src="https://github-readme-stats.vercel.app/api?username=MinsiAI&show_icons=true&theme=dark&include_all_commits=true&count_private=true" />
+  </a>
+  <a href="https://github.com/MinsiAI">
+    <img height="180em" src="https://github-readme-stats.vercel.app/api/top-langs/?username=MinsiAI&layout=compact&theme=dark" />
+  </a>
+</p>
 
 ### 📫 Connect with me
 - 🌐 Website: [minsi.ai](https://minsi.ai)
