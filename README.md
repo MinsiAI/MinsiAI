@@ -23,20 +23,10 @@ I am a student at **Guangzhou Foreign Language School (International Division)**
 ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![Git](https://img.shields.io/badge/git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white)
 
-### 📊 GitHub Stats
-<p align="left">
-  <a href="https://github.com/MinsiAI">
-    <img height="180em" src="https://github-readme-stats.vercel.app/api?username=MinsiAI&show_icons=true&theme=tokyonight&include_all_commits=true&count_private=true" />
-  </a>
-  <a href="https://github.com/MinsiAI">
-    <img height="180em" src="https://github-readme-stats.vercel.app/api/top-langs/?username=MinsiAI&layout=compact&theme=tokyonight" />
-  </a>
-</p>
 
-### 📫 Connect with me
-[![Website](https://img.shields.io/badge/Website-minsi.ai-blue?style=for-the-badge&logo=google-chrome&logoColor=white)](https://minsi.ai)
-[![Twitter](https://img.shields.io/badge/Twitter-@Minsi__AI-1DA1F2?style=for-the-badge&logo=x&logoColor=white)](https://x.com/Minsi_AI)
-[![Email](https://img.shields.io/badge/Email-minsi.ai@outlook.com-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:minsi.ai@outlook.com)
+### 📫 Let's Connect
+- 🌐 **Portfolio**: [minsi.ai](https://minsi.ai)
+- 🐦 **X (Twitter)**: [@Minsi_AI](https://x.com/Minsi_AI)
+- 📧 **Email**: [minsi.ai@outlook.com](mailto:minsi.ai@outlook.com)
 
----
 "Coding with empathy, building with focus."
