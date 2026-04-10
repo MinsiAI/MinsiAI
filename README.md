@@ -2,7 +2,7 @@
 
 ### 🚀 Founder of Minsi AI | High School Freshman | Affective Computing Enthusiast
 
-I am a student at **Guangzhou Foreign Language School (International Division)**, dedicated to creating a safe digital haven for youth who shine in solitude through technology and empathy.
+I am a student at **Guangzhou Foreign Language School **, dedicated to creating a safe digital haven for youth who shine in solitude through technology and empathy.
 
 ---
 
