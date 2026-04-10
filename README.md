@@ -2,7 +2,7 @@
 
 ### Founder of Minsi AI | Student builder exploring affective computing, AI products, and digital identity
 
-I’m a student at **Guangzhou Foreign Language School**, building AI products that support students’ emotional well-being, self-reflection, and healthy digital identity.
+I’m a student builder creating AI products that support emotional well-being, self-reflection, and healthy digital identity for young people.Currently studying at **Guangzhou Foreign Language School**.
 
 I’m especially interested in creating thoughtful technology for young people who think deeply, grow quietly, and need space to breathe.
 
