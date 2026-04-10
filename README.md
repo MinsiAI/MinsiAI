@@ -26,14 +26,17 @@ I am a student at **Guangzhou Foreign Language School (International Division)**
 ### 📊 GitHub Stats
 <p align="left">
   <a href="https://github.com/MinsiAI">
-    <img height="180em" src="https://github-readme-stats.vercel.app/api?username=MinsiAI&show_icons=true&theme=dark&include_all_commits=true&count_private=true" />
+    <img height="180em" src="https://github-readme-stats.vercel.app/api?username=MinsiAI&show_icons=true&theme=tokyonight&include_all_commits=true&count_private=true" />
   </a>
   <a href="https://github.com/MinsiAI">
-    <img height="180em" src="https://github-readme-stats.vercel.app/api/top-langs/?username=MinsiAI&layout=compact&theme=dark" />
+    <img height="180em" src="https://github-readme-stats.vercel.app/api/top-langs/?username=MinsiAI&layout=compact&theme=tokyonight" />
   </a>
 </p>
 
 ### 📫 Connect with me
-- 🌐 Website: [minsi.ai](https://minsi.ai)
-- 🐦 Twitter: [@Minsi_AI](https://x.com/Minsi_AI)
-- 📧 Email: [minsi.ai@outlook.com](mailto:minsi.ai@outlook.com)
+[![Website](https://img.shields.io/badge/Website-minsi.ai-blue?style=for-the-badge&logo=google-chrome&logoColor=white)](https://minsi.ai)
+[![Twitter](https://img.shields.io/badge/Twitter-@Minsi__AI-1DA1F2?style=for-the-badge&logo=x&logoColor=white)](https://x.com/Minsi_AI)
+[![Email](https://img.shields.io/badge/Email-minsi.ai@outlook.com-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:minsi.ai@outlook.com)
+
+---
+"Coding with empathy, building with focus."
