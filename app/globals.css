@@ -1,0 +1,791 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #0e1138;
+  background: #fbf5f7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Source Han Sans CN", Arial, sans-serif;
+  background: #fbf5f7;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-shell {
+  --mobile-x: clamp(12px, 4.1vw, 18px);
+  --mobile-content: min(390px, calc(100vw - var(--mobile-x) - var(--mobile-x)));
+  padding-inline: var(--mobile-x);
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+.mobile-note {
+  left: clamp(2px, 1.1vw, 6px);
+  top: clamp(42px, 11.5vw, 52px);
+  width: clamp(72px, 20.5vw, 84px);
+  height: clamp(65px, 18.45vw, 76px);
+}
+
+.mobile-window {
+  right: clamp(-286px, -64vw, -214px);
+  top: clamp(88px, 23.5vw, 104px);
+  width: clamp(720px, 195vw, 800px);
+  height: clamp(510px, 138vw, 575px);
+}
+
+.mobile-window-fade {
+  top: clamp(258px, 72vw, 292px);
+  height: clamp(360px, 100vw, 420px);
+}
+
+.mobile-cloud {
+  left: clamp(-96px, -22vw, -78px);
+  top: clamp(324px, 90vw, 360px);
+  width: clamp(166px, 46vw, 188px);
+  height: clamp(160px, 45vw, 182px);
+}
+
+.mobile-cloud-hand {
+  left: clamp(72px, 22vw, 92px);
+  top: clamp(368px, 102vw, 406px);
+  width: clamp(14px, 4vw, 17px);
+  height: clamp(21px, 6vw, 25px);
+}
+
+.mobile-header {
+  height: clamp(40px, 10.8vw, 46px);
+}
+
+.mobile-header-actions {
+  gap: clamp(8px, 2.7vw, 12px);
+}
+
+.mobile-language {
+  height: clamp(32px, 8.8vw, 36px);
+  padding-inline: clamp(10px, 3.1vw, 13px);
+  font-size: clamp(14px, 3.85vw, 15px);
+}
+
+.mobile-menu-button {
+  width: clamp(32px, 8.8vw, 36px);
+  height: clamp(32px, 8.8vw, 36px);
+}
+
+.mobile-hero,
+.mobile-chat {
+  width: var(--mobile-content);
+  max-width: var(--mobile-content);
+}
+
+.mobile-hero {
+  margin-top: clamp(8px, 2.9vw, 13px);
+  transform: translateX(clamp(0px, 2.35vw, 10px));
+}
+
+.mobile-title-row {
+  gap: clamp(6px, 2.1vw, 9px);
+}
+
+.mobile-title {
+  font-size: clamp(24px, 6.9vw, 27px);
+}
+
+.mobile-title-heart {
+  right: clamp(-22px, -5.2vw, -18px);
+  top: clamp(-7px, -1.5vw, -5px);
+  width: clamp(16px, 4.8vw, 19px);
+  height: clamp(16px, 4.8vw, 19px);
+}
+
+.mobile-script {
+  width: min(258px, 72vw);
+  height: auto;
+}
+
+.mobile-underline {
+  width: min(270px, 76vw);
+  height: clamp(10px, 3vw, 12px);
+}
+
+.mobile-subtitle {
+  margin-top: clamp(7px, 2.35vw, 9px);
+  font-size: clamp(12px, 3.35vw, 13px);
+  letter-spacing: clamp(0.25px, 0.15vw, 0.7px);
+}
+
+.mobile-chat {
+  height: clamp(124px, 33.6vw, 134px);
+  margin-top: clamp(10px, 3.2vw, 13px);
+}
+
+.mobile-chat-top {
+  right: clamp(10px, 5.7vw, 22px);
+  width: clamp(164px, 45.7vw, 182px);
+  height: clamp(48px, 12.8vw, 52px);
+  padding-inline: clamp(15px, 4.6vw, 18px);
+  border-radius: clamp(20px, 5.8vw, 23px);
+}
+
+.mobile-chat-top p {
+  font-size: clamp(13px, 3.65vw, 14px);
+}
+
+.mobile-chat-bottom {
+  left: clamp(8px, 4.6vw, 18px);
+  top: clamp(63px, 17.1vw, 68px);
+  width: min(252px, calc(100% - 32px));
+  height: clamp(62px, 16.6vw, 66px);
+  padding: clamp(13px, 3.7vw, 14px) clamp(14px, 4.5vw, 17px);
+  border-radius: clamp(21px, 5.9vw, 24px);
+}
+
+.mobile-chat-logo {
+  left: clamp(15px, 4.5vw, 18px);
+  top: clamp(23px, 6.4vw, 25px);
+  width: clamp(32px, 9.2vw, 36px);
+  height: clamp(17px, 4.9vw, 19px);
+}
+
+.mobile-chat-reply {
+  margin-left: clamp(52px, 15.5vw, 60px);
+  font-size: clamp(15px, 4.1vw, 16px);
+  line-height: clamp(20px, 5.4vw, 21px);
+}
+
+.mobile-voice-section {
+  margin-top: clamp(12px, 3.8vw, 16px);
+}
+
+.mobile-voice-area,
+.mobile-voice-button {
+  width: clamp(114px, 32.3vw, 126px);
+  height: clamp(114px, 32.3vw, 126px);
+}
+
+.mobile-mic {
+  width: clamp(36px, 10.5vw, 41px);
+  height: clamp(36px, 10.5vw, 41px);
+}
+
+.mobile-voice-text {
+  margin-top: clamp(7px, 2.1vw, 8px);
+  font-size: clamp(10px, 2.95vw, 11px);
+}
+
+.mobile-voice-wave-wrap {
+  margin-top: clamp(5px, 1.6vw, 6px);
+  transform: scale(0.92);
+}
+
+.mobile-prompt {
+  max-width: min(82vw, 330px);
+  margin-top: clamp(15px, 4.35vw, 18px);
+  font-size: clamp(10.5px, 2.9vw, 11px);
+  line-height: clamp(17px, 4.65vw, 18px);
+}
+
+.mobile-features {
+  margin-top: clamp(16px, 4.8vw, 20px);
+  gap: clamp(12px, 3.8vw, 16px);
+}
+
+.mobile-feature-card {
+  gap: clamp(12px, 4vw, 16px);
+  padding: clamp(8px, 2.55vw, 10px) clamp(16px, 5.05vw, 20px);
+  border-radius: clamp(22px, 6.6vw, 26px);
+}
+
+.mobile-feature-icon {
+  width: clamp(46px, 13.4vw, 52px);
+  height: clamp(46px, 13.4vw, 52px);
+}
+
+.mobile-feature-icon-img {
+  width: clamp(26px, 7.7vw, 30px);
+  height: clamp(26px, 7.7vw, 30px);
+}
+
+.mobile-feature-title {
+  font-size: clamp(15px, 4.1vw, 16px);
+  line-height: clamp(20px, 5.55vw, 22px);
+}
+
+.mobile-feature-body {
+  font-size: clamp(12.5px, 3.45vw, 13.5px);
+  line-height: clamp(18px, 5.15vw, 20px);
+}
+
+.mobile-footer {
+  width: min(90%, 620px);
+  font-size: clamp(10px, 2.75vw, 11px);
+  line-height: clamp(15px, 4.1vw, 16px);
+}
+
+@media (max-width: 359px) {
+  .mobile-shell {
+    --mobile-x: 12px;
+  }
+
+  .mobile-title {
+    font-size: 23px;
+  }
+
+  .mobile-script {
+    width: min(236px, 74vw);
+  }
+
+  .mobile-underline {
+    width: min(246px, 77vw);
+  }
+
+  .mobile-chat-bottom {
+    width: min(238px, calc(100% - 24px));
+  }
+
+  .mobile-prompt {
+    max-width: 86vw;
+  }
+
+  .mobile-feature-card {
+    gap: 11px;
+    padding-inline: 14px;
+  }
+
+  .mobile-voice-wave-wrap {
+    transform: scale(0.86);
+  }
+}
+
+@media (min-width: 360px) and (max-width: 374px) {
+  .mobile-voice-wave-wrap {
+    transform: scale(0.88);
+  }
+}
+
+.desktop-shell {
+  position: relative;
+}
+
+.desktop-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(251, 245, 247, 0.08), rgba(251, 245, 247, 0.08)),
+    url("/figma-assets/bg-pc.png") center / cover no-repeat;
+  filter: blur(4px);
+  opacity: 0.29;
+  transform: scale(1.015);
+}
+
+.desktop-stage {
+  container-type: inline-size;
+  width: min(100vw, calc(100svh * 1.77777778));
+  max-height: 100svh;
+}
+
+.desktop-content-layer {
+  position: absolute;
+  inset: 0;
+  transform: scale(0.965);
+  transform-origin: 50% 50%;
+}
+
+@supports not (height: 100svh) {
+  .desktop-stage {
+    width: min(100vw, calc(100vh * 1.77777778));
+    max-height: 100vh;
+  }
+}
+
+.hero-minsi {
+  background: linear-gradient(180deg, #968df1 0%, #867ce9 68%, #786fe0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.desktop-header {
+  position: absolute;
+  inset: -0.5cqw 0 auto;
+  z-index: 20;
+  height: 4cqw;
+  min-height: 72px;
+  max-height: 80px;
+}
+
+.desktop-header-inner {
+  display: flex;
+  width: 83.5%;
+  max-width: 1604px;
+  height: 100%;
+  margin: 0 auto;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.desktop-logo {
+  transform: translateX(-0.52cqw);
+}
+
+.desktop-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2.48cqw;
+}
+
+.desktop-nav {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.58cqw;
+  color: #0e1138;
+  font-size: clamp(15px, 0.94cqw, 18px);
+  line-height: 1;
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
+.desktop-nav a {
+  display: flex;
+  height: 2.4cqw;
+  align-items: center;
+  padding: 0 0.34cqw;
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.desktop-nav span {
+  display: block;
+  width: 1px;
+  height: 18px;
+  background: #e6e4ff;
+}
+
+.desktop-auth-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.78cqw;
+}
+
+.desktop-language,
+.desktop-login {
+  display: flex;
+  height: 2.4cqw;
+  min-height: 42px;
+  width: 6.56cqw;
+  min-width: 126px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: clamp(15px, 0.94cqw, 18px);
+  line-height: 1;
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
+.desktop-language {
+  gap: 0.42cqw;
+  border: 1px solid rgba(238, 232, 240, 0.76);
+  background: rgba(255, 255, 255, 0.72);
+  color: #0e1138;
+  box-shadow: 0 6px 16px rgba(98, 88, 140, 0.05);
+  backdrop-filter: blur(16px);
+}
+
+.desktop-login {
+  border: 0;
+  background: #8b82ef;
+  color: #fff;
+  box-shadow: 0 7px 16px rgba(128, 116, 253, 0.12);
+}
+
+.desktop-header-icon {
+  width: max(18px, 1.04cqw);
+  height: max(18px, 1.04cqw);
+  flex: 0 0 auto;
+}
+
+.voice-pulse {
+  animation: voicePulse 2.6s ease-in-out infinite;
+}
+
+.voice-wave span {
+  display: block;
+  width: 3px;
+  border-radius: 999px;
+  background: #fff;
+  opacity: 0.68;
+  animation: voiceWaveIdle 1.86s ease-in-out infinite;
+  transform-origin: center;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.desktop-voice-button:hover .voice-wave span,
+.desktop-voice-button:focus-visible .voice-wave span,
+.voice-pulse:active .voice-wave span,
+.voice-pulse:focus-visible .voice-wave span {
+  opacity: 0.94;
+  animation-name: voiceWaveHover;
+}
+
+.desktop-voice-button {
+  position: absolute;
+  left: 25.7%;
+  top: 8.4%;
+  z-index: 2;
+  display: flex;
+  aspect-ratio: 1;
+  width: 48.6%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #bfa8fb 0%, #9685ef 52%, #7068df 100%);
+  color: #fff;
+  isolation: isolate;
+  overflow: hidden;
+  transition: filter 360ms ease;
+}
+
+.desktop-voice-button::before,
+.desktop-voice-button::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  aspect-ratio: 1;
+  width: 34%;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.18) 0 17%, rgba(244, 239, 255, 0.13) 18% 34%, transparent 36%),
+    radial-gradient(circle, transparent 0 54%, rgba(255, 255, 255, 0.14) 56% 58%, transparent 61%);
+  filter: blur(0.35px);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.16);
+}
+
+.desktop-voice-button::after {
+  width: 27%;
+  border-color: rgba(255, 255, 255, 0.16);
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.13) 0 22%, rgba(239, 232, 255, 0.11) 23% 39%, transparent 41%),
+    radial-gradient(circle, transparent 0 57%, rgba(255, 255, 255, 0.1) 59% 61%, transparent 64%);
+}
+
+.desktop-voice-button:hover,
+.desktop-voice-button:focus-visible {
+  filter: brightness(1.025) saturate(1.02);
+}
+
+.desktop-voice-button-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateY(0.18cqw);
+}
+
+.voice-orbit {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  z-index: 1;
+  width: 84%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.mobile-voice-orbit {
+  top: 50%;
+  z-index: 1;
+  width: 230%;
+  opacity: 0.74;
+}
+
+.mobile-voice-orbit .voice-ring {
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow:
+    0 0 42px rgba(255, 255, 255, 0.24),
+    inset 0 0 24px rgba(255, 255, 255, 0.1);
+}
+
+.mobile-voice-orbit .voice-ring-md {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.mobile-voice-orbit .voice-ring-lg {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+@media (max-width: 1023px) {
+  .mobile-voice-area .voice-ripple {
+    animation-name: soundRippleSoft;
+    animation-duration: 2.18s;
+  }
+
+  .mobile-voice-area .voice-halo {
+    background: rgba(159, 131, 251, 0.11);
+    filter: blur(38px);
+    animation: mobileHaloBreathe 2.8s ease-in-out infinite;
+  }
+
+  .mobile-voice-area .voice-ring {
+    animation: mobileRingBreathe 2.8s ease-in-out infinite;
+  }
+
+  .mobile-voice-area .voice-wave span {
+    opacity: 0.82;
+    animation-name: voiceWaveHover;
+    animation-duration: 1.92s;
+  }
+}
+
+.voice-ring,
+.voice-ripple {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+}
+
+.voice-ring {
+  border: 1.4px solid rgba(255, 255, 255, 0.38);
+  box-shadow:
+    0 0 46px rgba(255, 255, 255, 0.3),
+    inset 0 0 28px rgba(255, 255, 255, 0.14);
+}
+
+.voice-ring-sm {
+  width: 58%;
+}
+
+.voice-ring-md {
+  width: 78%;
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+.voice-ring-lg {
+  width: 100%;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.voice-halo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 70%;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: rgba(159, 131, 251, 0.07);
+  filter: blur(28px);
+  transform: translate(-50%, -50%);
+}
+
+.voice-ripple {
+  width: 60%;
+  border: 2.2px solid rgba(255, 255, 255, 0.72);
+  background: radial-gradient(circle, transparent 56%, rgba(255, 255, 255, 0.26) 59%, rgba(233, 226, 255, 0.14) 64%, transparent 73%);
+  box-shadow:
+    0 0 28px rgba(255, 255, 255, 0.6),
+    0 0 58px rgba(149, 124, 245, 0.12);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.98);
+  animation-name: none;
+  animation-duration: 1.72s;
+  animation-timing-function: ease-out;
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+  will-change: opacity, transform;
+}
+
+.voice-ripple:nth-of-type(2) {
+  animation-delay: 0.42s;
+}
+
+.voice-ripple:nth-of-type(3) {
+  animation-delay: 0.84s;
+}
+
+.voice-ripple:nth-of-type(4) {
+  animation-delay: 1.26s;
+}
+
+.voice-area:hover .voice-ripple,
+.desktop-voice-button:hover + .voice-orbit .voice-ripple,
+.desktop-voice-button:focus-visible + .voice-orbit .voice-ripple,
+.voice-area:focus-within .voice-ripple,
+.voice-area:active .voice-ripple {
+  animation-name: soundRippleSoft;
+}
+
+.voice-area:hover .voice-halo,
+.desktop-voice-button:hover + .voice-orbit .voice-halo,
+.desktop-voice-button:focus-visible + .voice-orbit .voice-halo,
+.voice-area:focus-within .voice-halo,
+.voice-area:active .voice-halo {
+  background: rgba(159, 131, 251, 0.12);
+  filter: blur(38px);
+}
+
+.voice-area:hover .voice-ring,
+.desktop-voice-button:hover + .voice-orbit .voice-ring,
+.desktop-voice-button:focus-visible + .voice-orbit .voice-ring,
+.voice-area:focus-within .voice-ring,
+.voice-area:active .voice-ring {
+  border-color: rgba(255, 255, 255, 0.42);
+}
+
+@keyframes voiceWaveIdle {
+  0%,
+  100% {
+    transform: scaleY(0.76);
+  }
+  50% {
+    transform: scaleY(1.04);
+  }
+}
+
+@keyframes voiceWaveHover {
+  0%,
+  100% {
+    transform: scaleY(0.86);
+  }
+  50% {
+    transform: scaleY(1.34);
+  }
+}
+
+@keyframes waterRippleSoft {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.14);
+  }
+  18% {
+    opacity: 0.34;
+  }
+  58% {
+    opacity: 0.14;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.08);
+  }
+}
+
+@keyframes soundRippleSoft {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+  16% {
+    opacity: 0.72;
+  }
+  54% {
+    opacity: 0.34;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.08);
+  }
+}
+
+@keyframes voicePulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 7px rgba(255, 255, 255, 0.44),
+      0 0 54px rgba(128, 116, 253, 0.1),
+      0 12px 24px rgba(83, 67, 202, 0.07);
+  }
+  50% {
+    box-shadow:
+      0 0 0 15px rgba(255, 255, 255, 0.26),
+      0 0 78px rgba(128, 116, 253, 0.13),
+      0 16px 30px rgba(83, 67, 202, 0.085);
+  }
+}
+
+@keyframes mobileHaloBreathe {
+  0%,
+  100% {
+    opacity: 0.68;
+    transform: translate(-50%, -50%) scale(0.98);
+  }
+  50% {
+    opacity: 0.92;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+}
+
+@keyframes mobileRingBreathe {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(0.985);
+  }
+  50% {
+    opacity: 0.88;
+    transform: translate(-50%, -50%) scale(1.025);
+  }
+}
+
+@keyframes rippleExpand {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.58);
+  }
+  12% {
+    opacity: 0.15;
+  }
+  62% {
+    opacity: 0.045;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-pulse,
+  .voice-wave span,
+  .voice-ring,
+  .voice-halo,
+  .voice-ripple,
+  .desktop-voice-button::before,
+  .desktop-voice-button::after {
+    animation: none !important;
+  }
+
+  .desktop-voice-button:hover,
+  .desktop-voice-button:focus-visible {
+    filter: brightness(1.02);
+  }
+}
