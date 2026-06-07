@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 import { GlassCard } from "../site/GlassCard";
-import { LanguageSwitch } from "../site/LanguageSwitch";
 import { MinsiButton } from "../site/MinsiButton";
 import { SafetyNotice } from "../site/SafetyNotice";
 import { SiteHeader } from "../site/SiteHeader";
@@ -317,32 +317,6 @@ function PrivacyLine() {
   );
 }
 
-function HeaderActions({ onVoice }: { onVoice: () => void }) {
-  return (
-    <div className="desktop-auth-actions">
-      <LanguageSwitch />
-      <MinsiButton className="desktop-header-primary-action" type="button" onClick={onVoice}>
-        <MicIcon className="desktop-header-icon" />
-        语音聊天
-      </MinsiButton>
-      <MinsiButton className="desktop-header-text-action" href="/">
-        退出
-      </MinsiButton>
-    </div>
-  );
-}
-
-function MobileChatNavActions() {
-  return (
-    <>
-      <LanguageSwitch compact />
-      <MinsiButton className="mobile-header-text-action" href="/">
-        退出
-      </MinsiButton>
-    </>
-  );
-}
-
 function CompanionCard() {
   return (
     <GlassCard as="section" className="chat-side-card chat-companion-card" id="chat-privacy-summary">
@@ -433,6 +407,7 @@ function responseForPrompt(prompt: string) {
 }
 
 export function TextChatPage() {
+  const router = useRouter();
   const [messages, setMessages] = useState<ChatMessageData[]>(initialMessages);
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -472,17 +447,22 @@ export function TextChatPage() {
   }
 
   function handleVoiceSwitch() {
-    appendExchange("切换语音");
+    router.push("/chat/voice");
   }
 
   function handleShortcut(item: ShortcutItem) {
+    if (item.kind === "voice") {
+      handleVoiceSwitch();
+      return;
+    }
+
     appendExchange(item.title);
   }
 
   return (
     <main className="chat-page">
-      <SiteHeaderOverlay showNav={false} showLogin={false} logoHref="/" actions={<HeaderActions onVoice={handleVoiceSwitch} />} />
-      <SiteHeader variant="mobile" showNav={false} showLogin={false} logoHref="/" actions={<MobileChatNavActions />} />
+      <SiteHeaderOverlay logoHref="/" />
+      <SiteHeader variant="mobile" logoHref="/" />
 
       <div className="chat-layout">
         <GlassCard as="section" className="chat-panel" aria-label="文字聊天">

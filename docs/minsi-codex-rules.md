@@ -1,6 +1,8 @@
 # Minsi Codex Rules（日常前端短版）
 
 > 日常前端开发默认读本文件。只在设计系统变更、新增公共组件、Auth/隐私边界、Token 或响应式规则调整时，再读 `docs/minsi-frontend-skill.md`。
+>
+> 本文件只记录所有页面通用的公共组件调用方式与基础约束。页面专属布局、图片、轮播、装饰元素和具体模块参数不要写入本文件。
 
 ---
 
@@ -46,6 +48,139 @@
 | 隐私安全提示 | `SafetyNotice` |
 
 如果 Figma 出现可复用新模式，优先扩展公共组件；只有一次性页面装饰或布局片段才放页面专用组件。
+
+### 公共组件参数速查
+
+下次做页面前优先按本节调用，不要页面内重写 Logo / Header / Button / Card / 安全提示。
+
+#### `SiteHeader`
+
+```tsx
+<SiteHeader
+  variant="desktop"
+  showNav
+  showLogin
+  logoHref="/"
+  activeNav="about"
+/>
+
+<SiteHeader variant="mobile" logoHref="/" />
+```
+
+- Props：`variant?: "desktop" | "mobile"`、`showNav?: boolean`、`showLogin?: boolean`、`transparent?: boolean`、`lang?: "zh" | "en"`、`logoHref?: string`、`logoSize?: "sm" | "md" | "lg"`、`activeNav?: "about" | "privacy" | "research"`、`actions?: ReactNode`、`className?: string`。
+- 默认：`variant="desktop"`、`showNav=true`、`showLogin=true`、`lang="zh"`、`logoHref="/"`。
+- Logo 默认尺寸由 Header 决定：desktop 用 `lg`，mobile 用 `sm`；页面不要为了贴 Figma 单独改 Logo 尺寸。
+- mobile 下 `showNav` 控制汉堡菜单；菜单由公共 Header 统一提供页面跳转，固定为「首页」+ PC 公共导航项，页面内不要重写。
+- mobile 菜单支持再次点击按钮、点击页面其它区域、用户滚动/滑动页面、按 `Escape` 关闭；不要监听全局 `scroll`，避免被页面内部自动轮播误关。
+- mobile 菜单和语言弹窗必须互斥：打开菜单时关闭语言弹窗，打开语言弹窗时关闭菜单，避免遮罩和浮层叠加。
+- 登录按钮不在 mobile Header 默认显示；需要额外动作时使用 `actions` 插槽。
+- desktop 下 `actions` 会替换默认语言切换和登录按钮；mobile 下 `actions` 追加在语言切换和菜单按钮之后。
+- `transparent` 当前保留作兼容参数，品牌页透明效果由公共 CSS 控制，页面不需要单独传。
+- 页面只通过 `activeNav` 标记当前页；不要自己写 nav link 或 active underline。
+
+#### `SiteHeaderOverlay`
+
+```tsx
+<SiteHeaderOverlay logoHref="/" activeNav="about" />
+```
+
+- Props：继承 `SiteHeader` 除 `variant` / `className` 外的参数，另有 `className?: string`、`stageClassName?: string`、`layerClassName?: string`。
+- 用于非首页的 PC 顶部品牌导航覆盖层；内部固定调用 `SiteHeader variant="desktop"`。
+- mobile Header 仍在页面内调用 `<SiteHeader variant="mobile" />`。
+
+#### `MinsiLogo`
+
+```tsx
+<MinsiLogo href="/" size="lg" />
+```
+
+- Props：`href?: string`、`size?: "sm" | "md" | "lg"`、`priority?: boolean`、`className?: string`。
+- 默认：`href="/"`、`size="md"`、`priority=false`。
+- `sm` / `md` 当前为固定移动尺寸；`lg` 用 `cqw` 跟随 desktop stage 缩放。
+- 常规页面不要直接调用 Logo；优先通过 `SiteHeader` 使用。
+
+#### `LanguageSwitch`
+
+```tsx
+<LanguageSwitch lang="zh" />
+<LanguageSwitch compact lang="zh" />
+```
+
+- Props：`lang?: "zh" | "en"`、`onChange?: (lang) => void`、`compact?: boolean`、`className?: string`。
+- desktop 默认类是 `desktop-language`；mobile compact 默认类是 `mobile-language`。
+- 语言选项固定显示 `中文` 和 `English`；英文使用 Title Case，不写成全大写 `ENGLISH`。
+- 点击按钮展开语言菜单；点击外部、用户滚动/滑动页面或按 `Escape` 关闭；不要监听全局 `scroll`，避免被页面内部自动轮播误关。
+- 语言弹窗和 mobile 菜单必须互斥，避免两个浮层同时打开。
+- desktop 语言菜单不使用全屏遮罩，避免首页/登录页 Header 和首屏内容整屏模糊；mobile compact 才使用轻遮罩。
+- mobile 语言弹窗遮罩必须低于 Header 层级，不能模糊 Logo 和 Header 控件；弹窗本体仍在 Header 上方。
+- 传 `className` 会替换默认按钮类；除非做公共组件扩展，不要在页面里替换。
+- 常规页面不要直接调用；优先让 `SiteHeader` 管。
+
+#### `MinsiButton`
+
+```tsx
+<MinsiButton href="/target" variant="primary" size="lg" className="minsi-button">
+  主操作
+</MinsiButton>
+```
+
+- Props：`href?: string`、`variant?: "primary" | "soft" | "ghost" | "danger"`、`size?: "sm" | "md" | "lg"`、`loading?: boolean`、`fullWidth?: boolean`、`className?: string`、`children`，并透传原生 `button` / `a` 属性。
+- 默认：`variant="primary"`、`size="md"`。
+- 有 `href` 时渲染 `<a>`；无 `href` 时渲染 `<button>`。
+- `className` 为空，或包含 `minsi-button`，才会自动应用标准 `variant` / `size` 类；纯自定义 className 表示完全自定义按钮外观。
+- 主 CTA 优先 `variant="primary" size="lg" className="minsi-button"`；危险/紧急入口用 `variant="danger"`。
+
+#### `GlassCard`
+
+```tsx
+<GlassCard as="section" className="page-card" aria-label="模块标题">
+  ...
+</GlassCard>
+```
+
+- Props：`as?: "div" | "section" | "article" | "aside"`、`className?: string`、`children`，并透传 HTML attributes。
+- 只负责语义容器；玻璃质感、圆角、阴影必须来自公共 class / design token，不要裸写 hex。
+
+#### `SafetyNotice`
+
+```tsx
+<SafetyNotice variant="desktop" />
+<SafetyNotice variant="mobile" text="Minsi 不保存你的聊天内容，也不是医生或心理治疗师。" />
+```
+
+- Props：`variant?: "desktop" | "mobile"`、`className?: string`、`text?: string`。
+- 默认文案必须保留安全边界：Minsi 不保存聊天内容，且不是医生或心理治疗师。
+- 传 `className` 会替换默认布局类；替换时必须自己保留定位、字号、颜色、对齐和响应式。
+
+#### `BrandPageChrome`
+
+```tsx
+<BrandPageChrome
+  showNav
+  showLogin
+  backgroundSrc="/figma-assets/bg-pc.png"
+  mobileBackgroundSrc="/figma-assets/bg-mobile.png"
+  safetyText="Minsi 不保存你的聊天内容，也不是医生或心理治疗师。"
+  desktopContentClassName="page-desktop-content"
+  mobileContentClassName="page-mobile-content"
+>
+  ...
+</BrandPageChrome>
+```
+
+- Props：`children`、`showNav?: boolean`、`showLogin?: boolean`、`backgroundSrc?: string`、`mobileBackgroundSrc?: string`、`safetyText?: string`、`safetyNoticeClassName?: string`、`mobileSafetyNoticeClassName?: string`、`desktopContentClassName?: string`、`mobileContentClassName?: string`。
+- 默认：`showNav=false`、`showLogin=false`、`backgroundSrc="/figma-assets/bg-pc.png"`。
+- 用于全屏品牌页面；内部已经调用 PC / mobile 公共 Header，不要再手写导航。
+
+### 统一布局与标题 Token
+
+- PC Header：`.desktop-header` 代码高度 `64px`；因 `desktop-content-layer` 缩放，视觉高度约 `62px`。页面不得覆盖 Header 高度。
+- Mobile Header：`.mobile-header` 视觉高度约 `52px`。
+- 普通页面首屏内容起点：PC 用 `--desktop-page-content-top`；mobile 用 `--mobile-page-header-gap`。
+- 品牌展示页首屏大标题必须统一使用：
+  - PC：`--minsi-desktop-hero-title-size`、`--minsi-desktop-hero-title-line`、`--minsi-desktop-hero-title-gap`、`--minsi-desktop-hero-title-mark-size`
+  - Mobile：`--minsi-mobile-hero-title-size`、`--minsi-mobile-hero-title-line`、`--minsi-mobile-hero-title-gap`、`--minsi-mobile-hero-title-mark-size`
+- 页面新增 H1 / hero title 时，不要写独立 `text-[...]`；优先复用上述 token 或公共 title class。
 
 ---
 

@@ -141,10 +141,15 @@ function DesktopDecorations() {
 function HeroText() {
   return (
     <section className="absolute left-1/2 top-[10.5%] z-10 w-[46%] -translate-x-1/2 text-center">
-      <div className="relative mx-auto inline-flex items-baseline justify-center gap-[1.06cqw] whitespace-nowrap font-normal leading-none tracking-[0.035cqw]">
-        <span className="text-[3.58cqw] text-minsi-ink">嗨， 我是</span>
-        <span className="hero-minsi text-[3.58cqw]">Minsi</span>
-        <img className="absolute -right-[2.66cqw] top-[0.05cqw] h-[2.04cqw] w-[2.04cqw] opacity-90" src={asset("sparkle.svg")} alt="" draggable={false} />
+      <div className="desktop-hero-title-row relative mx-auto inline-flex items-baseline justify-center whitespace-nowrap font-normal tracking-[0.035cqw]">
+        <span className="desktop-hero-title-text text-minsi-ink">嗨， 我是</span>
+        <span className="desktop-hero-title-text hero-minsi">Minsi</span>
+        <img
+          className="desktop-hero-title-mark absolute -right-[2.66cqw] top-[0.05cqw] opacity-90"
+          src={asset("sparkle.svg")}
+          alt=""
+          draggable={false}
+        />
       </div>
       <img className="mx-auto mt-[0.88cqw] h-[3.84cqw] w-[34.35cqw] object-contain opacity-95" src={asset("hero-script.png")} alt="我在这里，听你说。" draggable={false} />
       <img className="mx-auto mt-[0.14cqw] h-[1.66cqw] w-[34.55cqw] object-fill opacity-82" src={asset("hero-underline.svg")} alt="" draggable={false} />
@@ -214,14 +219,16 @@ function DesktopHome() {
       <div className="desktop-stage relative z-[1] aspect-video overflow-hidden">
         <img className="absolute inset-0 h-full w-full object-cover" src={asset("bg-pc.png")} alt="" draggable={false} />
         <div className="desktop-content-layer">
-          <DesktopDecorations />
           <SiteHeader variant="desktop" />
-          <HeroText />
-          <ChatBubbles />
-          <VoiceArea />
-          <PromptNotes />
-          <FeaturePanel />
-          <SafetyNotice variant="desktop" />
+          <div className="desktop-main-content">
+            <DesktopDecorations />
+            <HeroText />
+            <ChatBubbles />
+            <VoiceArea />
+            <PromptNotes />
+            <FeaturePanel />
+            <SafetyNotice variant="desktop" />
+          </div>
         </div>
       </div>
     </main>
@@ -245,7 +252,7 @@ function MobileHome() {
 
       <SiteHeader variant="mobile" />
 
-      <section className="mobile-hero relative z-10 mx-auto mt-[11px] max-w-[360px] translate-x-[10px] text-center">
+      <section className="mobile-hero relative z-10 mx-auto mt-[var(--mobile-page-header-gap)] max-w-[360px] translate-x-[10px] text-center">
         <div className="mobile-title-row relative inline-flex items-baseline justify-center gap-[9px] whitespace-nowrap font-semibold leading-none tracking-[0.2px]">
           <span className="mobile-title text-[27px] text-minsi-ink">嗨， 我是</span>
           <span className="mobile-title mobile-title-minsi text-[27px] text-minsi-primary">Minsi</span>
