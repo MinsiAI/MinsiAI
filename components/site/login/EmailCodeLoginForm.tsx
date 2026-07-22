@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MinsiButton } from "../MinsiButton";
-import { loginWithEmailCode, sendEmailCode } from "../../../lib/auth/login-api";
+import { loginWithEmailCode, resolveSafeRedirectPath, sendEmailCode } from "../../../lib/auth/login-api";
 import { useCountdown } from "./useCountdown";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -40,6 +40,16 @@ export function EmailCodeLoginForm() {
   const trimmedCode = code.trim();
   const sendDisabled = sendLoading || remainingSeconds > 0;
   const showCodeStep = hasRequestedCode || code.length > 0;
+  const primaryButtonText = showCodeStep
+    ? submitLoading
+      ? "登录中"
+      : "登录"
+    : sendLoading
+      ? "发送中"
+      : remainingSeconds > 0
+        ? `${remainingSeconds}s`
+        : "获取验证码";
+  const primaryButtonDisabled = showCodeStep ? submitLoading : sendDisabled;
 
   const validateEmail = () => {
     if (!EMAIL_PATTERN.test(trimmedEmail)) {
@@ -72,10 +82,23 @@ export function EmailCodeLoginForm() {
       }
     } catch {
       resetSendCooldown();
-      setError("网络好像有点慢，我们再试一次。");
+      setError("验证码发送失败，请稍后再试。");
     } finally {
       setSendLoading(false);
     }
+  };
+
+  const handleFieldChange = (value: string) => {
+    if (showCodeStep) {
+      setCode(value.slice(0, 8));
+    } else {
+      setEmail(value);
+      setHasRequestedCode(false);
+      setCode("");
+    }
+
+    setMessage(null);
+    setError(null);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -103,7 +126,8 @@ export function EmailCodeLoginForm() {
       const result = await loginWithEmailCode(trimmedEmail, trimmedCode);
 
       if (result.ok) {
-        router.push("/chat");
+        const redirect = resolveSafeRedirectPath(new URLSearchParams(window.location.search).get("redirect"));
+        router.replace(redirect);
         return;
       }
 
@@ -121,66 +145,37 @@ export function EmailCodeLoginForm() {
     <form className="mt-3 space-y-3" onSubmit={handleSubmit} noValidate>
       <div className="flex h-12 w-full items-center rounded-full border border-[var(--minsi-border)] bg-[var(--minsi-card-bg-strong)] px-4 shadow-[var(--shadow-language)] transition focus-within:border-[var(--minsi-primary)] focus-within:shadow-[var(--shadow-focus)]">
         <label className="relative flex min-w-0 flex-1 items-center">
-          <span className="sr-only">邮箱地址</span>
-          <MailIcon className="mr-3 h-5 w-5 shrink-0 text-[var(--minsi-muted)]" />
+          <span className="sr-only">{showCodeStep ? "邮箱验证码" : "邮箱地址"}</span>
+          {showCodeStep ? (
+            <KeyIcon className="mr-3 h-5 w-5 shrink-0 text-[var(--minsi-muted)]" />
+          ) : (
+            <MailIcon className="mr-3 h-5 w-5 shrink-0 text-[var(--minsi-muted)]" />
+          )}
           <input
             className="min-w-0 flex-1 bg-transparent text-[14px] text-[var(--minsi-ink)] outline-none placeholder:text-[var(--minsi-muted)]"
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            placeholder="请输入邮箱地址"
-            value={email}
-            onChange={(event) => {
-              setEmail(event.target.value);
-              setHasRequestedCode(false);
-              setCode("");
-              setMessage(null);
-              setError(null);
-            }}
+            type={showCodeStep ? "text" : "email"}
+            inputMode={showCodeStep ? "numeric" : "email"}
+            autoComplete={showCodeStep ? "one-time-code" : "email"}
+            placeholder={showCodeStep ? "请输入验证码" : "请输入邮箱地址"}
+            maxLength={showCodeStep ? 8 : undefined}
+            value={showCodeStep ? code : email}
+            onChange={(event) => handleFieldChange(event.target.value)}
           />
         </label>
         <span className="mx-3 h-7 w-px bg-[var(--minsi-line)]" aria-hidden="true" />
 
         <MinsiButton
-          type="button"
-          loading={sendLoading}
-          disabled={sendDisabled}
-          onClick={handleSendCode}
+          type={showCodeStep ? "submit" : "button"}
+          loading={showCodeStep ? submitLoading : sendLoading}
+          disabled={primaryButtonDisabled}
+          onClick={showCodeStep ? undefined : handleSendCode}
           className="h-full min-w-[98px] rounded-full px-1 text-right text-[14px] font-medium text-[var(--minsi-primary)] transition disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-[112px]"
         >
-          {sendLoading ? "发送中" : remainingSeconds > 0 ? `${remainingSeconds}s` : "获取验证码"}
+          {primaryButtonText}
         </MinsiButton>
       </div>
 
       <p className="text-center text-[14px] leading-5 text-[var(--minsi-muted)]">不用手机号，一个邮箱就可以开始</p>
-
-      {showCodeStep ? (
-        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-          <label className="relative block">
-            <span className="sr-only">邮箱验证码</span>
-            <KeyIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--minsi-muted)]" />
-            <input
-              className="h-12 w-full rounded-full border border-[var(--minsi-border)] bg-[var(--minsi-card-bg-strong)] pl-12 pr-4 text-[15px] text-[var(--minsi-ink)] outline-none transition placeholder:text-[var(--minsi-muted)] focus:border-[var(--minsi-primary)] focus:shadow-[var(--shadow-focus)]"
-              type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              placeholder="请输入验证码"
-              maxLength={8}
-              value={code}
-              onChange={(event) => setCode(event.target.value.slice(0, 8))}
-            />
-          </label>
-
-          <MinsiButton
-            type="submit"
-            loading={submitLoading}
-            disabled={submitLoading}
-            className="h-12 rounded-full bg-[var(--minsi-primary-soft)] px-6 text-[15px] font-medium text-[var(--minsi-white)] shadow-[var(--shadow-login)] transition disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-[112px]"
-          >
-            {submitLoading ? "进入中" : "登录"}
-          </MinsiButton>
-        </div>
-      ) : null}
 
       {error || message ? (
         <p className="text-center text-[13px] leading-[18px] text-[var(--minsi-muted)]" aria-live="polite">

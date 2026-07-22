@@ -2,7 +2,21 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
+import { type ClipboardEvent, type DragEvent, type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
+import { getSafetyResources, streamChatMessage, type ChatResponse, type SafetyResource } from "../../lib/api/chat";
+import { ApiFetchError } from "../../lib/api/http";
+import { pushProtectedRoute } from "../../lib/auth/protected-navigation";
+import {
+  CHAT_CONTEXT_MAX_TURNS,
+  CHAT_INPUT_MAX_LENGTH,
+  CHAT_INPUT_OVER_LIMIT_MESSAGE,
+  CHAT_INPUT_WARNING_LENGTH,
+  TEXT_CHAT_CONTEXT_MAX_LENGTH,
+  MINSI_WELCOME_MESSAGE_ID,
+  MINSI_WELCOME_MESSAGE_VARIANTS,
+  getCharLength
+} from "../../lib/chat/chat-config";
+import type { ChatContextTurn } from "../../lib/chat/chat-types";
 import { GlassCard } from "../site/GlassCard";
 import { MinsiButton } from "../site/MinsiButton";
 import { SafetyNotice } from "../site/SafetyNotice";
@@ -10,6 +24,7 @@ import { SiteHeader } from "../site/SiteHeader";
 import { SiteHeaderOverlay } from "../site/SiteHeaderOverlay";
 
 const asset = (name: string) => `/figma-assets/${name}`;
+const VOICE_CHAT_PATH = "/chat/voice";
 
 type ChatRole = "minsi" | "user" | "typing";
 
@@ -25,46 +40,6 @@ interface ShortcutItem {
   description: string;
   kind: "unclear" | "mood" | "voice";
 }
-
-const initialMessages: ChatMessageData[] = [
-  {
-    id: "minsi-welcome",
-    role: "minsi",
-    lines: ["嗨，我在这里。", "你可以慢慢说，不用一次讲清楚。", "我会一直在，认真听你说。"],
-    time: "10:30"
-  },
-  {
-    id: "user-unclear",
-    role: "user",
-    lines: ["我不知道怎么讲。"],
-    time: "10:31"
-  },
-  {
-    id: "minsi-guide",
-    role: "minsi",
-    lines: ["没关系，说不清楚也没关系。", "我们可以从你更接近的感觉开始。", "你现在更倾向于哪一种呢?"],
-    time: "10:30"
-  },
-  {
-    id: "user-clarity",
-    role: "user",
-    lines: ["想先理清楚吧，脑子有点乱。"],
-    time: "10:32"
-  },
-  {
-    id: "minsi-followup",
-    role: "minsi",
-    lines: ["好的，我们一起来一点点理清。", "你现在脑子里，最乱的是什么?", "从最让你困扰的那一点说起也可以。"],
-    time: "10:30"
-  },
-  {
-    id: "minsi-typing",
-    role: "typing",
-    lines: ["..."]
-  }
-];
-
-const emotionPrompts = ["有点低落", "有点紧张", "有点烦", "不知道怎么说", "想先理清楚"];
 
 const shortcuts: ShortcutItem[] = [
   {
@@ -98,6 +73,20 @@ function createMessageId(prefix: string) {
   }
 
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function createWelcomeMessage(): ChatMessageData {
+  return {
+    id: MINSI_WELCOME_MESSAGE_ID,
+    role: "minsi",
+    lines: randomWelcomeMessageLines(),
+    time: currentTime()
+  };
+}
+
+function randomWelcomeMessageLines() {
+  const index = Math.floor(Math.random() * MINSI_WELCOME_MESSAGE_VARIANTS.length);
+  return MINSI_WELCOME_MESSAGE_VARIANTS[index] ?? MINSI_WELCOME_MESSAGE_VARIANTS[0];
 }
 
 function createMessage(role: Exclude<ChatRole, "typing">, text: string): ChatMessageData {
@@ -234,7 +223,7 @@ function ChatMessage({ message }: { message: ChatMessageData }) {
           {message.lines.map((line) => (
             <p key={line}>{line}</p>
           ))}
-          {message.id === "minsi-welcome" ? <Image className="chat-bubble-heart" src={asset("heart.svg")} alt="" width={18} height={16} draggable={false} /> : null}
+          {message.id === MINSI_WELCOME_MESSAGE_ID ? <Image className="chat-bubble-heart" src={asset("heart.svg")} alt="" width={18} height={16} draggable={false} /> : null}
         </div>
         <time className="chat-message-meta">{message.time}</time>
       </div>
@@ -242,39 +231,62 @@ function ChatMessage({ message }: { message: ChatMessageData }) {
   );
 }
 
-function EmotionChips({ onSelect }: { onSelect: (text: string) => void }) {
-  return (
-    <div className="chat-emotion-chips" aria-label="陪伴提示">
-      {emotionPrompts.map((prompt, index) => (
-        <MinsiButton className="chat-emotion-chip" type="button" onClick={() => onSelect(prompt)} key={prompt}>
-          <span aria-hidden="true">{["😟", "😰", "😠", "🙂", "🤔"][index]}</span>
-          {prompt}
-        </MinsiButton>
-      ))}
-    </div>
-  );
-}
-
 function ChatComposer({
   value,
   onChange,
   onSubmit,
-  onVoice
+  onVoice,
+  disabled,
+  isSending,
+  isVoiceSwitching
 }: {
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
   onVoice: () => void;
+  disabled: boolean;
+  isSending: boolean;
+  isVoiceSwitching: boolean;
 }) {
+  const inputLength = getCharLength(value);
+  const showCharacterCount = inputLength > CHAT_INPUT_WARNING_LENGTH;
+  const isOverLimit = inputLength > CHAT_INPUT_MAX_LENGTH;
+  const describedBy = [
+    "minsi-chat-privacy",
+    showCharacterCount ? "minsi-chat-character-count" : "",
+    isOverLimit ? "minsi-chat-input-warning" : ""
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     onSubmit();
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.nativeEvent.isComposing) {
+      return;
+    }
+
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       onSubmit();
+    }
+  }
+
+  function handlePaste(event: ClipboardEvent<HTMLTextAreaElement>) {
+    const items = Array.from(event.clipboardData.items);
+    const hasFileOrImage = items.some((item) => item.kind === "file" || item.type.startsWith("image/"));
+
+    if (hasFileOrImage) {
+      event.preventDefault();
+    }
+  }
+
+  function handleDrop(event: DragEvent<HTMLTextAreaElement>) {
+    if (event.dataTransfer.files.length > 0) {
+      event.preventDefault();
     }
   }
 
@@ -283,26 +295,39 @@ function ChatComposer({
       <label className="sr-only" htmlFor="minsi-chat-input">
         输入当前聊天内容
       </label>
-      <div className="chat-input-shell">
+      <div className={`chat-input-shell${showCharacterCount ? " has-counter" : ""}${isOverLimit ? " is-over-limit" : ""}`}>
         <textarea
           id="minsi-chat-input"
           value={value}
           rows={1}
+          disabled={disabled}
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
+          onDrop={handleDrop}
           placeholder="说一点也可以，慢慢来..."
-          aria-describedby="minsi-chat-privacy"
+          aria-busy={isSending}
+          aria-describedby={describedBy}
+          aria-invalid={isOverLimit}
+          autoComplete="off"
         />
-        <MinsiButton className="chat-emoji-button" type="button" aria-label="选择情绪">
-          <MoodIcon className="chat-input-icon" />
-        </MinsiButton>
-        <MinsiButton className="chat-send-button" type="submit" aria-label="发送当前消息">
+        {showCharacterCount ? (
+          <span className="chat-character-count" id="minsi-chat-character-count" aria-live="polite">
+            {inputLength} / {CHAT_INPUT_MAX_LENGTH}
+          </span>
+        ) : null}
+        <MinsiButton className="chat-send-button" type="submit" aria-label={isSending ? "正在发送" : "发送当前消息"} loading={isSending} disabled={disabled || !value.trim() || isOverLimit}>
           <SendIcon className="chat-send-icon" />
         </MinsiButton>
       </div>
-      <MinsiButton className="chat-voice-switch" type="button" onClick={onVoice} aria-label="切换语音聊天">
+      <MinsiButton className="chat-voice-switch" type="button" onClick={onVoice} aria-label={isVoiceSwitching ? "正在确认登录状态" : "切换语音聊天"} loading={isVoiceSwitching} disabled={disabled || isVoiceSwitching}>
         <MicIcon className="chat-voice-switch-icon" />
       </MinsiButton>
+      {isOverLimit ? (
+        <p className="chat-input-warning" id="minsi-chat-input-warning" role="status">
+          {CHAT_INPUT_OVER_LIMIT_MESSAGE}
+        </p>
+      ) : null}
     </form>
   );
 }
@@ -369,7 +394,19 @@ function ShortcutCard({ onShortcut }: { onShortcut: (item: ShortcutItem) => void
   );
 }
 
-function EmergencyCard() {
+type SafetyResourceStatus = "idle" | "loading" | "ready" | "error";
+
+function EmergencyCard({
+  status,
+  resources,
+  error,
+  onLoad
+}: {
+  status: SafetyResourceStatus;
+  resources: SafetyResource[];
+  error: string;
+  onLoad: () => void;
+}) {
   return (
     <GlassCard as="aside" className="chat-side-card chat-emergency-card" id="chat-emergency-help" aria-labelledby="chat-emergency-title">
       <div className="chat-emergency-heading">
@@ -382,34 +419,129 @@ function EmergencyCard() {
         className="chat-emergency-note"
         text="Minsi 不是医生或心理治疗师；遇到危险时，请联系可信任的大人或专业机构。"
       />
-      <MinsiButton className="chat-emergency-button" type="button">
-        查看帮助资源
+      <MinsiButton className="chat-emergency-button" type="button" onClick={onLoad} loading={status === "loading"} disabled={status === "loading"}>
+        {status === "loading" ? "正在获取" : "查看帮助资源"}
         <ExternalIcon className="chat-emergency-button-icon" />
       </MinsiButton>
+      {status === "ready" ? (
+        <ul className="chat-emergency-resources" aria-live="polite">
+          {resources.map((resource) => (
+            <li key={resource.id}>
+              <strong>{resource.name}</strong>
+              <span>{resource.contact}</span>
+              <small>{resource.disclaimer || resource.available}</small>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {status === "error" ? (
+        <p className="chat-emergency-error" role="status" aria-live="polite">
+          {error}
+        </p>
+      ) : null}
     </GlassCard>
   );
 }
 
-function responseForPrompt(prompt: string) {
-  if (prompt === "切换语音") {
-    return "可以。现在先保持这次文字聊天不保存；想说出来时，我们也可以切换成语音陪伴。";
+function ChatErrorNotice({ message, onRetry, canRetry }: { message: string; onRetry: () => void; canRetry: boolean }) {
+  return (
+    <div className="chat-error-notice" role="status" aria-live="polite">
+      <p>{message}</p>
+      {canRetry ? (
+        <MinsiButton className="chat-retry-button" type="button" onClick={onRetry}>
+          重试
+        </MinsiButton>
+      ) : null}
+    </div>
+  );
+}
+
+function formatReplyLines(response: ChatResponse) {
+  return formatReplyText(response.reply);
+}
+
+function formatReplyText(reply: string) {
+  const lines = reply
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return lines.length > 0 ? lines : [reply];
+}
+
+function chatErrorMessage(error: unknown) {
+  if (error instanceof ApiFetchError) {
+    if (error.status === 401 || error.code === "UNAUTHORIZED") {
+      return "请先登录后再继续聊天。";
+    }
+
+    if (error.code === "API_BASE_URL_MISSING") {
+      return "后端地址还没有配置，暂时无法发送。";
+    }
+
+    return error.message || "连接暂时不太顺利，请稍后再试。";
   }
 
-  if (prompt === "情绪选择") {
-    return "可以先不用解释原因。你可以从一个最接近的情绪开始，我会陪你慢慢整理。";
+  return "连接暂时不太顺利，请稍后再试。";
+}
+
+function safetyResourceErrorMessage(error: unknown) {
+  if (error instanceof ApiFetchError && error.code === "API_BASE_URL_MISSING") {
+    return "后端地址还没有配置，暂时无法获取资源。";
   }
 
-  if (prompt === "我说不清楚" || prompt === "不知道怎么说") {
-    return "说不清楚也没关系。你可以先说一个词、一个画面，或只说现在最明显的感觉。";
+  return "暂时无法获取帮助资源，请稍后再试。";
+}
+
+function messageText(message: ChatMessageData) {
+  return message.lines.join("\n").trim();
+}
+
+function buildRecentChatTurns(currentMessages: ChatMessageData[], currentUserTextToExclude = ""): ChatContextTurn[] {
+  const contextMessages = currentMessages
+    .filter((message) => (message.role === "user" || message.role === "minsi") && message.id !== MINSI_WELCOME_MESSAGE_ID)
+    .filter((message) => messageText(message));
+
+  if (currentUserTextToExclude) {
+    const duplicateIndex = [...contextMessages].reverse().findIndex((message) => message.role === "user" && messageText(message) === currentUserTextToExclude);
+
+    if (duplicateIndex >= 0) {
+      contextMessages.splice(contextMessages.length - 1 - duplicateIndex, 1);
+    }
   }
 
-  return "我听到了。我们不用急着把它讲完整，可以先从最靠近你的那一点开始。";
+  const turns: ChatContextTurn[] = [];
+  let usedLength = 0;
+
+  for (const message of contextMessages.slice(-CHAT_CONTEXT_MAX_TURNS).reverse()) {
+    const content = messageText(message);
+    const contentLength = getCharLength(content);
+
+    if (usedLength + contentLength > TEXT_CHAT_CONTEXT_MAX_LENGTH) {
+      break;
+    }
+
+    turns.push({
+      role: message.role === "user" ? "user" : "assistant",
+      content
+    });
+    usedLength += contentLength;
+  }
+
+  return turns.reverse();
 }
 
 export function TextChatPage() {
   const router = useRouter();
-  const [messages, setMessages] = useState<ChatMessageData[]>(initialMessages);
+  const [messages, setMessages] = useState<ChatMessageData[]>(() => [createWelcomeMessage()]);
   const [draft, setDraft] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [isStreamingReplyVisible, setIsStreamingReplyVisible] = useState(false);
+  const [chatError, setChatError] = useState("");
+  const [lastFailedText, setLastFailedText] = useState("");
+  const [safetyResourcesStatus, setSafetyResourcesStatus] = useState<SafetyResourceStatus>("idle");
+  const [safetyResources, setSafetyResources] = useState<SafetyResource[]>([]);
+  const [safetyResourcesError, setSafetyResourcesError] = useState("");
+  const [isVoiceSwitching, setIsVoiceSwitching] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const shouldScrollRef = useRef(false);
 
@@ -425,38 +557,153 @@ export function TextChatPage() {
     }
 
     shouldScrollRef.current = false;
-  }, [messages]);
+  }, [messages, isSending, chatError]);
 
-  function appendExchange(text: string) {
+  async function submitChat(text: string, appendUserMessage = true) {
     const trimmed = text.trim();
+
+    if (!trimmed || isSending) {
+      return;
+    }
+
+    if (getCharLength(trimmed) > CHAT_INPUT_MAX_LENGTH) {
+      setChatError(CHAT_INPUT_OVER_LIMIT_MESSAGE);
+      setLastFailedText("");
+      return;
+    }
+
+    const recentTurns = buildRecentChatTurns(messages, appendUserMessage ? "" : trimmed);
+
+    shouldScrollRef.current = true;
+    setChatError("");
+    setLastFailedText("");
+
+    if (appendUserMessage) {
+      const userMessage = createMessage("user", trimmed);
+      setMessages((current) => [...current.filter((message) => message.role !== "typing"), userMessage]);
+    }
+
+    setIsSending(true);
+    setIsStreamingReplyVisible(false);
+    const minsiMessageId = createMessageId("minsi");
+
+    try {
+      const response = await streamChatMessage(trimmed, recentTurns, {
+        onDelta: (_delta, reply) => {
+          const minsiMessage: ChatMessageData = {
+            id: minsiMessageId,
+            role: "minsi",
+            lines: formatReplyText(reply),
+            time: currentTime()
+          };
+
+          shouldScrollRef.current = true;
+          setIsStreamingReplyVisible(true);
+          setMessages((current) => {
+            const existingIndex = current.findIndex((message) => message.id === minsiMessageId);
+            if (existingIndex < 0) {
+              return [...current.filter((message) => message.role !== "typing"), minsiMessage];
+            }
+
+            return current.map((message) => (message.id === minsiMessageId ? minsiMessage : message));
+          });
+        }
+      });
+      const minsiMessage: ChatMessageData = {
+        id: minsiMessageId,
+        role: "minsi",
+        lines: formatReplyLines(response),
+        time: currentTime()
+      };
+
+      shouldScrollRef.current = true;
+      setMessages((current) => {
+        const existingIndex = current.findIndex((message) => message.id === minsiMessageId);
+        if (existingIndex < 0) {
+          return [...current.filter((message) => message.role !== "typing"), minsiMessage];
+        }
+
+        return current.map((message) => (message.id === minsiMessageId ? minsiMessage : message));
+      });
+
+      if (response.safetyLevel === "crisis") {
+        void loadSafetyResources();
+      }
+    } catch (error) {
+      shouldScrollRef.current = true;
+      setMessages((current) => current.filter((message) => message.id !== minsiMessageId));
+      setChatError(chatErrorMessage(error));
+      setLastFailedText(trimmed);
+    } finally {
+      setIsSending(false);
+      setIsStreamingReplyVisible(false);
+    }
+  }
+
+  function handleSend() {
+    if (getCharLength(draft) > CHAT_INPUT_MAX_LENGTH) {
+      return;
+    }
+
+    const trimmed = draft.trim();
 
     if (!trimmed) {
       return;
     }
 
-    const userMessage = createMessage("user", trimmed);
-    const minsiMessage = createMessage("minsi", responseForPrompt(trimmed));
-
-    shouldScrollRef.current = true;
-    setMessages((current) => [...current.filter((message) => message.role !== "typing"), userMessage, minsiMessage, { id: createMessageId("typing"), role: "typing", lines: ["..."] }]);
-  }
-
-  function handleSend() {
-    appendExchange(draft);
+    void submitChat(trimmed);
     setDraft("");
   }
 
-  function handleVoiceSwitch() {
-    router.push("/chat/voice");
+  async function handleVoiceSwitch() {
+    if (isVoiceSwitching) {
+      return;
+    }
+
+    setIsVoiceSwitching(true);
+    try {
+      await pushProtectedRoute(router, VOICE_CHAT_PATH);
+    } catch {
+      setChatError("暂时无法确认登录状态，请稍后再试。");
+      setLastFailedText("");
+    } finally {
+      setIsVoiceSwitching(false);
+    }
+  }
+
+  function handleRetry() {
+    if (!lastFailedText) {
+      return;
+    }
+
+    void submitChat(lastFailedText, false);
   }
 
   function handleShortcut(item: ShortcutItem) {
     if (item.kind === "voice") {
-      handleVoiceSwitch();
+      void handleVoiceSwitch();
       return;
     }
 
-    appendExchange(item.title);
+    void submitChat(item.title);
+  }
+
+  async function loadSafetyResources() {
+    if (safetyResourcesStatus === "loading") {
+      return;
+    }
+
+    setSafetyResourcesStatus("loading");
+    setSafetyResourcesError("");
+
+    try {
+      const resources = await getSafetyResources("zh");
+      setSafetyResources(resources);
+      setSafetyResourcesStatus("ready");
+    } catch (error) {
+      setSafetyResourcesError(safetyResourceErrorMessage(error));
+      setSafetyResourcesStatus("error");
+    }
   }
 
   return (
@@ -470,18 +717,27 @@ export function TextChatPage() {
             {messages.map((message) => (
               <div key={message.id}>
                 <ChatMessage message={message} />
-                {message.id === "minsi-guide" ? <EmotionChips onSelect={appendExchange} /> : null}
               </div>
             ))}
+            {isSending && !isStreamingReplyVisible ? (
+              <ChatMessage
+                message={{
+                  id: "minsi-typing",
+                  role: "typing",
+                  lines: ["..."]
+                }}
+              />
+            ) : null}
+            {chatError ? <ChatErrorNotice message={chatError} onRetry={handleRetry} canRetry={Boolean(lastFailedText) && !isSending} /> : null}
           </div>
-          <ChatComposer value={draft} onChange={setDraft} onSubmit={handleSend} onVoice={handleVoiceSwitch} />
+          <ChatComposer value={draft} onChange={setDraft} onSubmit={handleSend} onVoice={() => void handleVoiceSwitch()} disabled={isSending} isSending={isSending} isVoiceSwitching={isVoiceSwitching} />
           <PrivacyLine />
         </GlassCard>
 
         <aside className="chat-sidebar" aria-label="陪伴提示与安全入口">
           <CompanionCard />
           <ShortcutCard onShortcut={handleShortcut} />
-          <EmergencyCard />
+          <EmergencyCard status={safetyResourcesStatus} resources={safetyResources} error={safetyResourcesError} onLoad={loadSafetyResources} />
         </aside>
       </div>
     </main>

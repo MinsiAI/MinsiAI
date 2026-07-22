@@ -3,13 +3,17 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-export type MinsiLang = "zh" | "en";
+import { languageSwitchMessages } from "../../lib/i18n/messages";
+import type { MinsiLang } from "../../lib/i18n/language";
+
+export type { MinsiLang } from "../../lib/i18n/language";
 
 export interface LanguageSwitchProps {
   lang?: MinsiLang;
   onChange?: (lang: MinsiLang) => void;
   compact?: boolean;
   className?: string;
+  localized?: boolean;
 }
 
 function GlobeIcon({ className = "" }: { className?: string }) {
@@ -37,12 +41,13 @@ const languageOptions: Array<{ lang: MinsiLang; label: string }> = [
 const closeLanguageMenuEvent = "minsi:close-language-menu";
 const closeMobileMenuEvent = "minsi:close-mobile-menu";
 
-export function LanguageSwitch({ lang = "zh", onChange, compact = false, className }: LanguageSwitchProps) {
+export function LanguageSwitch({ lang = "zh", onChange, compact = false, className, localized = false }: LanguageSwitchProps) {
   const menuId = useId();
   const switchRef = useRef<HTMLDivElement>(null);
   const [selectedLang, setSelectedLang] = useState<MinsiLang>(lang);
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const messages = localized ? languageSwitchMessages[selectedLang] : languageSwitchMessages.zh;
   const label = selectedLang === "zh" ? "中文" : "English";
   const iconClassName = compact ? "mobile-language-icon" : "desktop-header-icon";
   const buttonClassName =
@@ -113,7 +118,7 @@ export function LanguageSwitch({ lang = "zh", onChange, compact = false, classNa
 
   return (
     <div className={compact ? "language-switch language-switch-compact" : "language-switch"} ref={switchRef}>
-      {open && compact && mounted ? createPortal(<button className="language-menu-backdrop" type="button" aria-label="关闭语言菜单" onClick={() => setOpen(false)} />, document.body) : null}
+      {open && compact && mounted ? createPortal(<button className="language-menu-backdrop" type="button" aria-label={messages.closeMenu} onClick={() => setOpen(false)} />, document.body) : null}
       <button
         className={buttonClassName}
         type="button"
@@ -127,13 +132,13 @@ export function LanguageSwitch({ lang = "zh", onChange, compact = false, classNa
         aria-controls={menuId}
         aria-expanded={open}
         aria-haspopup="listbox"
-        aria-label="切换语言"
+        aria-label={messages.switchLabel}
       >
         <GlobeIcon className={iconClassName} />
         {label}
         <ChevronIcon className={iconClassName} />
       </button>
-      <div className="language-menu" id={menuId} role="listbox" aria-label="选择语言" hidden={!open}>
+      <div className="language-menu" id={menuId} role="listbox" aria-label={messages.menuLabel} hidden={!open}>
         {languageOptions.map((option) => {
           const selected = option.lang === selectedLang;
 

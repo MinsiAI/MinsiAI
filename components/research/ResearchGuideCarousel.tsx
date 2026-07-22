@@ -13,7 +13,10 @@ export interface ResearchGuideCarouselItem {
 }
 
 interface ResearchGuideCarouselProps {
-  items: ResearchGuideCarouselItem[];
+  items: readonly ResearchGuideCarouselItem[];
+  ariaLabel: string;
+  dotsLabel: string;
+  viewLabelPrefix: string;
 }
 
 function GuideIcon({ type }: { type: ResearchIconType }) {
@@ -42,7 +45,7 @@ function GuideIcon({ type }: { type: ResearchIconType }) {
   );
 }
 
-export function ResearchGuideCarousel({ items }: ResearchGuideCarouselProps) {
+export function ResearchGuideCarousel({ items, ariaLabel, dotsLabel, viewLabelPrefix }: ResearchGuideCarouselProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const activeIndexRef = useRef(0);
   const scrollFrameRef = useRef<number | null>(null);
@@ -130,7 +133,7 @@ export function ResearchGuideCarousel({ items }: ResearchGuideCarouselProps) {
   }, []);
 
   return (
-    <div className={styles.guideCarousel} aria-roledescription="carousel" aria-label="研究计划轮播">
+    <div className={styles.guideCarousel} aria-roledescription="carousel" aria-label={ariaLabel}>
       <div className={styles.guideTrack} ref={trackRef} onScroll={handleScroll}>
         {items.map((item, index) => (
           <GlassCard as="article" className={`${styles.guideCard} ${styles.guideSlide}`} key={item.title} data-research-guide-slide={index} aria-label={item.title}>
@@ -144,9 +147,9 @@ export function ResearchGuideCarousel({ items }: ResearchGuideCarouselProps) {
           </GlassCard>
         ))}
       </div>
-      <div className={styles.guideDots} aria-label="切换研究计划卡片">
+      <div className={styles.guideDots} aria-label={dotsLabel}>
         {items.map((item, index) => (
-          <button aria-label={`查看${item.title}`} aria-current={activeIndex === index ? "true" : undefined} className={styles.guideDot} key={item.title} onClick={() => scrollToIndex(index)} type="button" />
+          <button aria-label={`${viewLabelPrefix}${item.title}`} aria-current={activeIndex === index ? "true" : undefined} className={styles.guideDot} key={item.title} onClick={() => scrollToIndex(index)} type="button" />
         ))}
       </div>
     </div>

@@ -1,103 +1,62 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { pollQrLoginStatus, requestQrCode, type QRProvider } from "../../../lib/auth/login-api";
+import { getApiOrigin, setRuntimeApiBaseUrl } from "../../../lib/api/http";
+import { getCurrentUser, notifyAuthSessionChanged } from "../../../lib/auth/session-api";
+import { checkOAuthLoginStatus, completeOAuthLogin, requestQrCode, resolveSafeRedirectPath, type QRProvider } from "../../../lib/auth/login-api";
 import { useCountdown } from "./useCountdown";
 
 export type QRLoginCardStatus = "idle" | "loading" | "active" | "expired" | "scanned" | "success" | "error";
 
+const QQ_REFRESH_SECONDS = 30;
+const OAUTH_STATUS_POLL_MS = 2000;
+
 interface UseQRLoginPollingOptions {
   provider: QRProvider;
   active: boolean;
-  onSuccess?: () => void;
+  onSuccess?: (redirect?: string) => void;
 }
 
 export function useQRLoginPolling({ provider, active, onSuccess }: UseQRLoginPollingOptions) {
   const [status, setStatus] = useState<QRLoginCardStatus>("idle");
-  const [qrImageUrl, setQrImageUrl] = useState<string | null>(null);
+  const [authorizeUrl, setAuthorizeUrl] = useState<string | null>(null);
+  const [qrUrl, setQrUrl] = useState<string | null>(null);
+  const [oauthState, setOauthState] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const qrIdRef = useRef<string | null>(null);
-  const pollTimerRef = useRef<number | null>(null);
   const requestVersionRef = useRef(0);
+  const isCompletingRef = useRef(false);
+  const onSuccessRef = useRef(onSuccess);
   const { remainingSeconds, start, stop, reset } = useCountdown();
 
-  const clearPollTimer = useCallback(() => {
-    if (pollTimerRef.current !== null) {
-      window.clearInterval(pollTimerRef.current);
-      pollTimerRef.current = null;
-    }
-  }, []);
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+  }, [onSuccess]);
 
   const loadQrCode = useCallback(async () => {
     const requestVersion = requestVersionRef.current + 1;
     requestVersionRef.current = requestVersion;
 
-    clearPollTimer();
     reset();
-    qrIdRef.current = null;
-    setQrImageUrl(null);
+    isCompletingRef.current = false;
+    setAuthorizeUrl(null);
+    setQrUrl(null);
+    setOauthState(null);
     setErrorMessage(null);
     setStatus("loading");
 
     try {
-      const qrCode = await requestQrCode(provider);
+      const redirect = resolveSafeRedirectPath(new URLSearchParams(window.location.search).get("redirect"));
+      const qrCode = await requestQrCode(provider, redirect);
 
       if (requestVersionRef.current !== requestVersion || !active) {
         return;
       }
 
-      qrIdRef.current = qrCode.qrId;
-      setQrImageUrl(qrCode.qrImageUrl);
+      setAuthorizeUrl(qrCode.authorizeUrl);
+      setQrUrl(qrCode.qrUrl || qrCode.authorizeUrl);
+      setOauthState(qrCode.state || extractOAuthState(qrCode.authorizeUrl));
       setStatus("active");
-      start(qrCode.expiresInSeconds);
-
-      pollTimerRef.current = window.setInterval(async () => {
-        const qrId = qrIdRef.current;
-
-        if (!qrId) {
-          return;
-        }
-
-        try {
-          const result = await pollQrLoginStatus(provider, qrId);
-
-          if (requestVersionRef.current !== requestVersion) {
-            return;
-          }
-
-          if (result.status === "scanned") {
-            setStatus("scanned");
-            return;
-          }
-
-          if (result.status === "confirmed") {
-            setStatus("success");
-            clearPollTimer();
-            stop();
-            onSuccess?.();
-            return;
-          }
-
-          if (result.status === "expired") {
-            setStatus("expired");
-            clearPollTimer();
-            stop();
-            return;
-          }
-
-          if (result.status === "error") {
-            setStatus("error");
-            setErrorMessage("二维码加载有点慢，我们再试一次。");
-            clearPollTimer();
-            stop();
-          }
-        } catch {
-          setStatus("error");
-          setErrorMessage("网络好像有点慢，我们再试一次。");
-          clearPollTimer();
-          stop();
-        }
-      }, 2500);
+      start(provider === "qq" ? Math.min(qrCode.expiresInSeconds, QQ_REFRESH_SECONDS) : qrCode.expiresInSeconds);
     } catch {
       if (requestVersionRef.current !== requestVersion) {
         return;
@@ -105,18 +64,17 @@ export function useQRLoginPolling({ provider, active, onSuccess }: UseQRLoginPol
 
       setStatus("error");
       setErrorMessage("二维码加载有点慢，我们再试一次。");
-      clearPollTimer();
       stop();
     }
-  }, [active, clearPollTimer, onSuccess, provider, reset, start, stop]);
+  }, [active, provider, reset, start, stop]);
 
   useEffect(() => {
     if (!active) {
       requestVersionRef.current += 1;
-      clearPollTimer();
       reset();
-      qrIdRef.current = null;
-      setQrImageUrl(null);
+      setAuthorizeUrl(null);
+      setQrUrl(null);
+      setOauthState(null);
       setErrorMessage(null);
       setStatus("idle");
       return;
@@ -126,22 +84,139 @@ export function useQRLoginPolling({ provider, active, onSuccess }: UseQRLoginPol
 
     return () => {
       requestVersionRef.current += 1;
-      clearPollTimer();
       stop();
     };
-  }, [active, clearPollTimer, loadQrCode, reset, stop]);
+  }, [active, loadQrCode, reset, stop]);
+
+  useEffect(() => {
+    if (!active) {
+      return undefined;
+    }
+
+    const apiOrigin = getApiOrigin();
+    const allowedOrigins = getAllowedOAuthMessageOrigins(apiOrigin, authorizeUrl);
+
+    const handleMessage = (event: MessageEvent) => {
+      if (!allowedOrigins.has(event.origin)) {
+        return;
+      }
+
+      if (!isOAuthSuccessMessage(event.data) || event.data.provider !== provider) {
+        if (!isOAuthCallbackMessage(event.data) || event.data.provider !== provider || isCompletingRef.current) {
+          return;
+        }
+
+        isCompletingRef.current = true;
+        setStatus("scanned");
+        void completeOAuthLogin(provider, event.data.code, event.data.state)
+          .then((completeResult) => getCurrentUser().then((currentUser) => ({ completeResult, currentUser })))
+          .then(({ completeResult, currentUser }) => {
+            if (!currentUser.authenticated) {
+              isCompletingRef.current = false;
+              setStatus("error");
+              setErrorMessage("登录状态没有生效，请刷新二维码后再试。");
+              stop();
+              return;
+            }
+
+            setStatus("success");
+            stop();
+            notifyAuthSessionChanged();
+            onSuccessRef.current?.(completeResult.redirect);
+          })
+          .catch(() => {
+            isCompletingRef.current = false;
+            setStatus("error");
+            setErrorMessage("登录状态没有生效，请刷新二维码后再试。");
+            stop();
+          });
+        return;
+      }
+
+      setStatus("scanned");
+      setRuntimeApiBaseUrl(event.origin);
+      void getCurrentUser()
+        .then((currentUser) => {
+          if (!currentUser.authenticated) {
+            setStatus("error");
+            setErrorMessage("登录状态没有生效，请刷新二维码后再试。");
+            stop();
+            return;
+          }
+
+          setStatus("success");
+          stop();
+          notifyAuthSessionChanged();
+          onSuccessRef.current?.(event.data.redirect);
+        })
+        .catch(() => {
+          setStatus("error");
+          setErrorMessage("登录状态没有生效，请刷新二维码后再试。");
+          stop();
+        });
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [active, authorizeUrl, provider, stop]);
+
+  useEffect(() => {
+    if (!active || !oauthState || (status !== "active" && status !== "scanned")) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    let isPolling = false;
+
+    const pollStatus = () => {
+      if (isPolling || isCompletingRef.current) {
+        return;
+      }
+
+      isPolling = true;
+      void checkOAuthLoginStatus(provider, oauthState)
+        .then((result) => {
+          if (cancelled || result.status !== "success") {
+            return;
+          }
+
+          setStatus("success");
+          stop();
+          notifyAuthSessionChanged();
+          onSuccessRef.current?.(result.redirect);
+        })
+        .catch(() => {
+          // Transient polling failures should not hide a still-scannable QR code.
+        })
+        .finally(() => {
+          isPolling = false;
+        });
+    };
+
+    const intervalId = window.setInterval(pollStatus, OAUTH_STATUS_POLL_MS);
+    pollStatus();
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [active, oauthState, provider, status, stop]);
 
   useEffect(() => {
     if (!active || remainingSeconds > 0) {
       return;
     }
 
-    if (status === "active" || status === "scanned") {
+    if (status === "active") {
+      void loadQrCode();
+      return;
+    }
+
+    if (status === "scanned") {
       setStatus("expired");
-      clearPollTimer();
       stop();
     }
-  }, [active, clearPollTimer, remainingSeconds, status, stop]);
+  }, [active, loadQrCode, remainingSeconds, status, stop]);
 
   const refresh = useCallback(() => {
     if (!active || status === "loading") {
@@ -153,9 +228,69 @@ export function useQRLoginPolling({ provider, active, onSuccess }: UseQRLoginPol
 
   return {
     status,
-    qrImageUrl,
+    authorizeUrl,
+    qrUrl,
+    oauthState,
     remainingSeconds,
     errorMessage,
     refresh
   };
+}
+
+function isOAuthSuccessMessage(value: unknown): value is { type: "minsi:oauth:success"; provider: QRProvider; redirect: string } {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const message = value as Record<string, unknown>;
+  return message.type === "minsi:oauth:success"
+    && (message.provider === "wechat" || message.provider === "qq")
+    && typeof message.redirect === "string";
+}
+
+function isOAuthCallbackMessage(value: unknown): value is { type: "minsi:oauth:callback"; provider: QRProvider; code: string; state: string } {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const message = value as Record<string, unknown>;
+  return message.type === "minsi:oauth:callback"
+    && (message.provider === "wechat" || message.provider === "qq")
+    && typeof message.code === "string"
+    && typeof message.state === "string";
+}
+
+function getAllowedOAuthMessageOrigins(apiOrigin: string, authorizeUrl: string | null) {
+  const origins = new Set<string>();
+  if (apiOrigin) {
+    origins.add(apiOrigin);
+  }
+
+  const callbackOrigin = getAuthorizeCallbackOrigin(authorizeUrl);
+  if (callbackOrigin) {
+    origins.add(callbackOrigin);
+  }
+
+  return origins;
+}
+
+function getAuthorizeCallbackOrigin(authorizeUrl: string | null) {
+  if (!authorizeUrl) {
+    return "";
+  }
+
+  try {
+    const callbackUrl = new URL(authorizeUrl).searchParams.get("redirect_uri");
+    return callbackUrl ? new URL(callbackUrl).origin : "";
+  } catch {
+    return "";
+  }
+}
+
+function extractOAuthState(authorizeUrl: string) {
+  try {
+    return new URL(authorizeUrl).searchParams.get("state");
+  } catch {
+    return null;
+  }
 }

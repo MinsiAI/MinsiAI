@@ -1,0 +1,4 @@
+interface:
+  display_name: "Minsi Admin"
+  short_description: "Build privacy-safe Minsi admin tools"
+  default_prompt: "Use $minsi-admin to design or implement a privacy-safe Minsi admin feature."

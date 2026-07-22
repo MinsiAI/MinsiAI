@@ -10,7 +10,12 @@ export interface ResearchFeedbackCarouselItem {
 }
 
 interface ResearchFeedbackCarouselProps {
-  items: ResearchFeedbackCarouselItem[];
+  items: readonly ResearchFeedbackCarouselItem[];
+  ariaLabel: string;
+  dotsLabel: string;
+  viewPrefix: string;
+  viewSuffix: string;
+  expandText: string;
 }
 
 function LocationIcon() {
@@ -22,7 +27,7 @@ function LocationIcon() {
   );
 }
 
-function FeedbackCard({ item, className = "" }: { item: ResearchFeedbackCarouselItem; className?: string }) {
+function FeedbackCard({ item, className = "", expandText }: { item: ResearchFeedbackCarouselItem; className?: string; expandText: string }) {
   return (
     <article className={[styles.feedbackCard, className].filter(Boolean).join(" ")}>
       <div className={styles.feedbackMeta}>
@@ -32,13 +37,13 @@ function FeedbackCard({ item, className = "" }: { item: ResearchFeedbackCarousel
       <blockquote>{item.body}</blockquote>
       <div className={styles.feedbackFooter}>
         <span>{item.tag}</span>
-        <button type="button">展开</button>
+        <button type="button">{expandText}</button>
       </div>
     </article>
   );
 }
 
-export function ResearchFeedbackCarousel({ items }: ResearchFeedbackCarouselProps) {
+export function ResearchFeedbackCarousel({ items, ariaLabel, dotsLabel, viewPrefix, viewSuffix, expandText }: ResearchFeedbackCarouselProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const activeIndexRef = useRef(0);
   const scrollFrameRef = useRef<number | null>(null);
@@ -126,17 +131,17 @@ export function ResearchFeedbackCarousel({ items }: ResearchFeedbackCarouselProp
   }, []);
 
   return (
-    <div className={styles.feedbackCarousel} aria-roledescription="carousel" aria-label="匿名反馈轮播">
+    <div className={styles.feedbackCarousel} aria-roledescription="carousel" aria-label={ariaLabel}>
       <div className={styles.feedbackTrack} ref={trackRef} onScroll={handleScroll}>
         {items.map((item, index) => (
-          <div className={styles.feedbackSlide} key={`${item.city}-${item.tag}`} data-feedback-slide={index}>
-            <FeedbackCard item={item} />
+          <div className={styles.feedbackSlide} key={`${item.city}-${item.tag}-${index}`} data-feedback-slide={index}>
+            <FeedbackCard item={item} expandText={expandText} />
           </div>
         ))}
       </div>
-      <div className={styles.feedbackDots} aria-label="切换匿名反馈卡片">
+      <div className={styles.feedbackDots} aria-label={dotsLabel}>
         {items.map((item, index) => (
-          <button aria-label={`查看${item.city}反馈`} aria-current={activeIndex === index ? "true" : undefined} className={styles.feedbackDot} key={`${item.city}-${item.tag}`} onClick={() => scrollToIndex(index)} type="button" />
+          <button aria-label={`${viewPrefix}${item.city}${viewSuffix}`} aria-current={activeIndex === index ? "true" : undefined} className={styles.feedbackDot} key={`${item.city}-${item.tag}-${index}`} onClick={() => scrollToIndex(index)} type="button" />
         ))}
       </div>
     </div>

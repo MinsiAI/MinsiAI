@@ -1,4 +1,13 @@
+"use client";
+
 import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
+import { ApiFetchError } from "../../lib/api/http";
+import { getApprovedResearchFeedback, getResearchFeedbackMetrics, submitResearchFeedback } from "../../lib/api/research";
+import type { ApprovedResearchFeedback, ResearchFeedbackMetrics, ResearchFeedbackRating } from "../../lib/api/research";
+import { researchMessages, type ResearchMessages } from "../../lib/i18n/messages";
+import { useLanguagePreference } from "../../lib/i18n/useLanguagePreference";
 import { GlassCard } from "../site/GlassCard";
 import { MinsiButton } from "../site/MinsiButton";
 import { SafetyNotice } from "../site/SafetyNotice";
@@ -18,114 +27,22 @@ interface Metric {
   icon: ResearchIconType;
 }
 
-interface GuideItem {
-  title: string;
-  body: string;
-  icon: ResearchIconType;
-}
-
 interface FeedbackItem {
   city: string;
   body: string;
   tag: string;
 }
 
-const trustItems: GuideItem[] = [
-  {
-    title: "隐私保护",
-    body: "只收集你主动提交的反馈",
-    icon: "shield"
-  },
-  {
-    title: "自愿参与",
-    body: "可以跳过问题，随时退出",
-    icon: "check"
-  },
-  {
-    title: "匿名样本",
-    body: "帮助校准产品表达",
-    icon: "comment"
-  }
-];
+type SubmitStatus = "idle" | "success" | "error";
 
-const metrics: Metric[] = [
-  { value: "48+", label: "内测体验", icon: "people" },
-  { value: "31+", label: "反馈样本", icon: "comment" },
-  { value: "9+", label: "覆盖城市", icon: "location" },
-  { value: "100%", label: "自愿参与", icon: "heart" }
-];
-
-const guideItems: GuideItem[] = [
-  {
-    title: "研究目的",
-    body: "了解用户在开口、隐私说明和离开流程上的真实感受，优化 Minsi 的入口、文案和安全提示。",
-    icon: "sparkle"
-  },
-  {
-    title: "参与方式",
-    body: "你可以选择匿名问卷、原型试用或短访谈。参与完全自愿，可以跳过任何问题，也可以随时退出。",
-    icon: "comment"
-  },
-  {
-    title: "反馈如何使用",
-    body: "反馈只用于改进产品体验和安全边界。Minsi 不保存聊天内容，退出后自动清除，也不会长期追踪你的表达。",
-    icon: "shield"
-  }
-];
-
-const suitableItems = ["正在试用 Minsi 的用户", "对隐私与表达安全有顾虑的人", "希望反馈界面、入口或文案的人", "青少年照护者、教育工作者或产品体验参与者"];
-
-const feedbackItems: FeedbackItem[] = [
-  {
-    city: "北京",
-    body: "我一开始担心自己说得太乱，后来发现可以慢慢讲，不需要马上整理成完整故事，这让我更愿意继续试用。",
-    tag: "被理解"
-  },
-  {
-    city: "上海",
-    body: "最有用的是入口文案不催我，也没有让我填很多信息。看到退出后会清除，我才敢把真实想法写出来。",
-    tag: "情绪表达"
-  },
-  {
-    city: "成都",
-    body: "我希望隐私说明再靠前一点，尤其是在第一次进入聊天前。如果能用更短的句子说明不保存内容，会更安心。",
-    tag: "不保存记录"
-  },
-  {
-    city: "广州",
-    body: "有些时候我只是想把今天发生的事说出来，不一定需要建议。Minsi 的语气比较安静，没有把我往某个结论上带。",
-    tag: "被理解"
-  },
-  {
-    city: "纽约",
-    body: "I was testing it late at night and liked that it didn't ask for a profile before I could start. The privacy note made the flow feel safer.",
-    tag: "表达入口"
-  },
-  {
-    city: "杭州",
-    body: "考试周试用的时候，我不想被提醒要立刻变好，只想先把事情讲清楚。这个节奏比较轻，不会让我有负担。",
-    tag: "考试压力"
-  },
-  {
-    city: "武汉",
-    body: "我会跳过一些不想回答的问题，这点很重要。研究说明里写着可以随时退出，让我觉得参与不是一种压力。",
-    tag: "轻松表达"
-  },
-  {
-    city: "深圳",
-    body: "如果后续做正式版本，希望保留匿名反馈入口。不是每个人都愿意留下联系方式，但很多细节其实可以帮助你们改产品。",
-    tag: "隐私安全"
-  },
-  {
-    city: "多伦多",
-    body: "Sometimes I only wanted to write one messy paragraph and leave. It helped that the product didn't make me label everything before I could continue.",
-    tag: "不评判"
-  }
-];
-
-const filters = ["全部", "不保存记录", "情绪表达", "被理解", "语音聊天", "考试压力", "其他"];
-const cities = ["北京", "上海", "广州", "成都", "深圳", "杭州", "武汉", "西安", "南京", "重庆", "纽约", "多伦多", "新加坡", "温哥华", "悉尼", "墨尔本", "伦敦", "巴黎", "东京", "首尔", "曼谷", "更多城市"];
-const experienceOptions = ["不保存记录", "隐私安全", "考试压力", "被理解", "情绪表达", "语音聊天", "其他"];
+const defaultResearchMetrics: ResearchFeedbackMetrics = {
+  userCount: 0,
+  approvedFeedbackCount: 0,
+  coveredRegionCount: 0,
+  voluntaryPercent: 0,
+  regions: []
+};
+const feedbackMaxLength = 1000;
 
 function ResearchIcon({ type, className = "" }: { type: ResearchIconType; className?: string }) {
   if (type === "shield") {
@@ -223,25 +140,25 @@ function SectionHeading({ title, body, id }: { title: string; body?: string; id:
   );
 }
 
-function HeroSection() {
+function HeroSection({ copy }: { copy: ResearchMessages }) {
   return (
     <section className={styles.hero} aria-labelledby="research-hero-title">
       <div className={styles.heroCopy}>
         <div className={styles.heroTitleWrap}>
-          <h1 id="research-hero-title">听听他们怎么说</h1>
+          <h1 id="research-hero-title">{copy.hero.title}</h1>
           <ResearchIcon type="sparkle" className={styles.heroSparkle} />
         </div>
-        <p className={styles.heroLead}>这里收集了一些来自内测体验和产品测试中的匿名心声。每一条反馈都经过隐私处理，已去除姓名、学校、联系方式等可识别个人身份的信息。我们希望你在这里看到的不只是数据，而是一些具体的感受、困惑，以及被认真倾听的瞬间。</p>
+        <p className={styles.heroLead}>{copy.hero.lead}</p>
         <div className={styles.heroActions}>
           <MinsiButton href="#share" variant="primary" size="lg" className={`minsi-button ${styles.primaryButton}`}>
-            分享你的想法
+            {copy.hero.share}
           </MinsiButton>
           <MinsiButton href="#privacy" variant="soft" size="lg" className={`minsi-button ${styles.secondaryButton}`}>
-            了解隐私保护
+            {copy.hero.privacy}
           </MinsiButton>
         </div>
-        <div className={styles.trustList} aria-label="匿名心声承诺">
-          {trustItems.map((item) => (
+        <div className={styles.trustList} aria-label={copy.hero.trustLabel}>
+          {copy.hero.trustItems.map((item) => (
             <div className={styles.trustItem} key={item.title}>
               <ResearchIcon type={item.icon} className={styles.trustIcon} />
               <div>
@@ -253,15 +170,15 @@ function HeroSection() {
         </div>
       </div>
       <div className={styles.heroVisual}>
-        <Image src={researchAsset("hero-cloud-logo-balanced.png")} alt="Minsi 云朵形象与用户反馈卡片" width={1748} height={861} priority sizes="(min-width: 1024px) 716px, 100vw" />
+        <Image src={researchAsset("hero-cloud-logo-balanced.png")} alt={copy.hero.imageAlt} width={1748} height={861} priority sizes="(min-width: 1024px) 716px, 100vw" />
       </div>
     </section>
   );
 }
 
-function MetricsSection() {
+function MetricsSection({ metrics, label }: { metrics: Metric[]; label: string }) {
   return (
-    <GlassCard as="section" className={styles.metricsPanel} aria-label="匿名心声数据概览">
+    <GlassCard as="section" className={styles.metricsPanel} aria-label={label}>
       {metrics.map((metric, index) => (
         <div className={styles.metricItem} key={metric.label}>
           <span className={`${styles.metricIcon} ${styles[`metricIcon-${metric.icon}`]}`}>
@@ -278,13 +195,13 @@ function MetricsSection() {
   );
 }
 
-function ResearchGuideSection() {
+function ResearchGuideSection({ copy }: { copy: ResearchMessages }) {
   return (
     <section className={styles.guideSection} aria-labelledby="research-guide-title">
-      <SectionHeading id="research-guide-title" title="我们想更认真地听见使用体验" body="研究重点放在表达入口、隐私理解和安全边界，不会读取或保存聊天内容。" />
-      <ResearchGuideCarousel items={guideItems} />
+      <SectionHeading id="research-guide-title" title={copy.guide.title} body={copy.guide.body} />
+      <ResearchGuideCarousel items={copy.guide.items} ariaLabel={copy.guide.carouselLabel} dotsLabel={copy.guide.dotsLabel} viewLabelPrefix={copy.guide.viewLabelPrefix} />
       <div className={styles.guideGrid}>
-        {guideItems.map((item) => (
+        {copy.guide.items.map((item) => (
           <GlassCard as="article" className={styles.guideCard} key={item.title}>
             <div className={styles.guideCardHeader}>
               <span>
@@ -296,13 +213,13 @@ function ResearchGuideSection() {
           </GlassCard>
         ))}
       </div>
-      <GlassCard as="aside" className={styles.suitablePanel} aria-label="适合参与的人">
+      <GlassCard as="aside" className={styles.suitablePanel} aria-label={copy.guide.suitableLabel}>
         <div>
           <ResearchIcon type="people" />
-          <h3>适合参与的人</h3>
+          <h3>{copy.guide.suitableTitle}</h3>
         </div>
         <ul>
-          {suitableItems.map((item) => (
+          {copy.guide.suitableItems.map((item) => (
             <li key={item}>{item}</li>
           ))}
         </ul>
@@ -311,30 +228,30 @@ function ResearchGuideSection() {
   );
 }
 
-function FeedbackSection() {
+function FeedbackSection({ items, copy }: { items: FeedbackItem[]; copy: ResearchMessages }) {
   return (
     <GlassCard as="section" className={styles.feedbackPanel} aria-labelledby="research-feedback-title">
       <div className={styles.panelHeader}>
         <div>
-          <h2 id="research-feedback-title">匿名反馈</h2>
+          <h2 id="research-feedback-title">{copy.feedback.title}</h2>
           <span aria-hidden="true" />
         </div>
-        <div className={styles.filterList} aria-label="反馈分类">
-          {filters.map((filter, index) => (
+        <div className={styles.filterList} aria-label={copy.feedback.filterLabel}>
+          {copy.feedback.filters.map((filter, index) => (
             <button className={index === 0 ? styles.activeFilter : undefined} type="button" key={filter}>
               {filter}
             </button>
           ))}
         </div>
         <p className={styles.updating}>
-          持续更新
+          {copy.feedback.updating}
           <ResearchIcon type="refresh" />
         </p>
       </div>
-      <ResearchFeedbackCarousel items={feedbackItems} />
+      <ResearchFeedbackCarousel items={items} ariaLabel={copy.feedback.carouselLabel} dotsLabel={copy.feedback.dotsLabel} viewPrefix={copy.feedback.viewPrefix} viewSuffix={copy.feedback.viewSuffix} expandText={copy.feedback.expand} />
       <div className={styles.feedbackGrid}>
-        {feedbackItems.map((item) => (
-          <article className={styles.feedbackCard} key={`${item.city}-${item.tag}`}>
+        {items.map((item, index) => (
+          <article className={styles.feedbackCard} key={`${item.city}-${item.tag}-${index}`}>
             <div className={styles.feedbackMeta}>
               <ResearchIcon type="location" />
               <span>{item.city}</span>
@@ -342,26 +259,26 @@ function FeedbackSection() {
             <blockquote>{item.body}</blockquote>
             <div className={styles.feedbackFooter}>
               <span>{item.tag}</span>
-              <button type="button">展开</button>
+              <button type="button">{copy.feedback.expand}</button>
             </div>
           </article>
         ))}
       </div>
       <div className={styles.feedbackMore}>
         <MinsiButton href="#share" variant="soft" size="sm" className={`minsi-button ${styles.softButton}`}>
-          查看更多反馈
+          {copy.feedback.more}
         </MinsiButton>
       </div>
     </GlassCard>
   );
 }
 
-function CitySection() {
+function CitySection({ cities, copy }: { cities: string[]; copy: ResearchMessages }) {
   return (
     <GlassCard as="section" className={styles.cityPanel} aria-labelledby="research-city-title">
       <div className={styles.cityHeader}>
-        <h2 id="research-city-title">来自这些地方</h2>
-        <p>地区仅精确到城市，用来理解不同环境下的产品体验。</p>
+        <h2 id="research-city-title">{copy.city.title}</h2>
+        <p>{copy.city.body}</p>
       </div>
       <div className={styles.cityList}>
         {cities.map((city) => (
@@ -370,22 +287,93 @@ function CitySection() {
       </div>
       <div className={styles.cityNotice}>
         <ResearchIcon type="shield" />
-        <p>所有内容经审核后匿名展示。你可以随时要求删除自己主动提交的反馈。</p>
+        <p>{copy.city.notice}</p>
       </div>
     </GlassCard>
   );
 }
 
-function ResearchSubmitButton() {
+function ResearchSubmitButton({ disabled, isSubmitting, copy }: { disabled: boolean; isSubmitting: boolean; copy: ResearchMessages["share"] }) {
   return (
-    <MinsiButton type="button" variant="primary" size="lg" className={`minsi-button ${styles.submitButton}`}>
-      匿名提交想法
-      <ResearchIcon type="send" />
+    <MinsiButton type="submit" variant="primary" size="lg" className={`minsi-button ${styles.submitButton}`} disabled={disabled} loading={isSubmitting}>
+      {isSubmitting ? copy.submitting : copy.submit}
+      {!isSubmitting ? <ResearchIcon type="send" /> : null}
     </MinsiButton>
   );
 }
 
-function ShareSection() {
+function ShareSection({ copy }: { copy: ResearchMessages }) {
+  const [feedbackText, setFeedbackText] = useState("");
+  const [selectedExperiences, setSelectedExperiences] = useState<string[]>([]);
+  const [rating, setRating] = useState<ResearchFeedbackRating>("unsure");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle");
+  const [submitMessage, setSubmitMessage] = useState("");
+  const feedbackLength = useMemo(() => getCharLength(feedbackText), [feedbackText]);
+  const canSubmit = feedbackLength > 0 && !isSubmitting;
+
+  function handleFeedbackTextChange(event: ChangeEvent<HTMLTextAreaElement>) {
+    setFeedbackText(limitFeedbackText(event.currentTarget.value));
+    if (submitStatus !== "idle") {
+      setSubmitStatus("idle");
+      setSubmitMessage("");
+    }
+  }
+
+  function toggleExperience(option: string) {
+    setSelectedExperiences((current) => {
+      if (current.includes(option)) {
+        return current.filter((item) => item !== option);
+      }
+
+      return [...current, option];
+    });
+    if (submitStatus !== "idle") {
+      setSubmitStatus("idle");
+      setSubmitMessage("");
+    }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const normalizedFeedbackText = feedbackText.trim();
+    if (!normalizedFeedbackText) {
+      setSubmitStatus("error");
+      setSubmitMessage(copy.share.emptyError);
+      return;
+    }
+
+    if (getCharLength(normalizedFeedbackText) > feedbackMaxLength) {
+      setSubmitStatus("error");
+      setSubmitMessage(copy.share.tooLongError.replace("{max}", String(feedbackMaxLength)));
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitStatus("idle");
+    setSubmitMessage("");
+
+    try {
+      await submitResearchFeedback({
+        rating,
+        feedbackTypes: selectedExperiences,
+        feedbackText: normalizedFeedbackText
+      });
+
+      setFeedbackText("");
+      setSelectedExperiences([]);
+      setRating("unsure");
+      setSubmitStatus("success");
+      setSubmitMessage(copy.share.success);
+    } catch (error) {
+      setSubmitStatus("error");
+      setSubmitMessage(resolveSubmitErrorMessage(error, copy));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <GlassCard as="section" className={styles.sharePanel} aria-labelledby="research-share-title" id="share">
       <div className={styles.shareIntro}>
@@ -393,52 +381,51 @@ function ShareSection() {
           <ResearchIcon type="comment" />
         </span>
         <div>
-          <h2 id="research-share-title">想分享你的想法吗？</h2>
-          <p id="privacy">参与研究是自愿的，你可以随时退出。Minsi 不保存聊天内容，退出后自动清除；你主动提交的反馈只用于改进产品体验和安全说明。</p>
+          <h2 id="research-share-title">{copy.share.title}</h2>
+          <p id="privacy">{copy.share.privacy}</p>
         </div>
       </div>
-      <form className={styles.shareForm}>
+      <form className={styles.shareForm} onSubmit={handleSubmit}>
         <div className={styles.feedbackColumn}>
           <label className={styles.feedbackInput}>
-            <span>你的反馈</span>
-            <textarea placeholder="写下你使用 Minsi 时的真实感受，几句话也可以..." maxLength={500} />
-            <small>0 / 500</small>
+            <span>{copy.share.feedbackLabel}</span>
+            <textarea aria-describedby="research-feedback-count research-submit-status" maxLength={feedbackMaxLength} onChange={handleFeedbackTextChange} placeholder={copy.share.placeholder} required value={feedbackText} />
+            <small id="research-feedback-count">{feedbackLength} / {feedbackMaxLength}</small>
           </label>
           <div className={`${styles.submitRow} ${styles.desktopSubmitRow}`}>
-            <ResearchSubmitButton />
+            <ResearchSubmitButton disabled={!canSubmit} isSubmitting={isSubmitting} copy={copy.share} />
           </div>
         </div>
         <fieldset className={styles.checkboxGroup}>
-          <legend>你最在意的体验（可多选）</legend>
+          <legend>{copy.share.experienceLegend}</legend>
           <div>
-            {experienceOptions.map((option) => (
-              <label key={option}>
-                <input type="checkbox" name="experience" value={option} />
-                <span>{option}</span>
+            {copy.share.experienceOptions.map((option) => (
+              <label key={option.value}>
+                <input checked={selectedExperiences.includes(option.value)} name="experience" onChange={() => toggleExperience(option.value)} type="checkbox" value={option.value} />
+                <span>{option.label}</span>
               </label>
             ))}
           </div>
         </fieldset>
         <fieldset className={styles.radioGroup}>
-          <legend>你觉得 Minsi 有帮助吗？</legend>
-          <label>
-            <input type="radio" name="helpful" value="very" />
-            <span>很有帮助</span>
-          </label>
-          <label>
-            <input type="radio" name="helpful" value="some" />
-            <span>有一点帮助</span>
-          </label>
-          <label>
-            <input type="radio" name="helpful" value="unsure" defaultChecked />
-            <span>还不确定</span>
-          </label>
+          <legend>{copy.share.ratingLegend}</legend>
+          {copy.share.ratingOptions.map((option) => (
+            <label key={option.value}>
+              <input checked={rating === option.value} name="helpful" onChange={() => setRating(option.value)} type="radio" value={option.value} />
+              <span>{option.label}</span>
+            </label>
+          ))}
         </fieldset>
         <div className={`${styles.submitRow} ${styles.mobileSubmitRow}`}>
-          <ResearchSubmitButton />
+          <ResearchSubmitButton disabled={!canSubmit} isSubmitting={isSubmitting} copy={copy.share} />
         </div>
+        {submitStatus !== "idle" ? (
+          <p className={`${styles.submitStatus} ${submitStatus === "success" ? styles.submitStatusSuccess : styles.submitStatusError}`} id="research-submit-status" role="status">
+            {submitMessage}
+          </p>
+        ) : null}
       </form>
-      <SafetyNotice className={styles.formSafety} />
+      <SafetyNotice className={styles.formSafety} text={copy.share.safetyText} />
     </GlassCard>
   );
 }
@@ -452,21 +439,122 @@ function ResearchFooter() {
 }
 
 export function UserResearchPage() {
+  const { lang, changeLanguage } = useLanguagePreference();
+  const copy = researchMessages[lang];
+  const [approvedFeedbackItems, setApprovedFeedbackItems] = useState<FeedbackItem[]>([]);
+  const [researchMetrics, setResearchMetrics] = useState<ResearchFeedbackMetrics>(defaultResearchMetrics);
+  const metrics = useMemo(() => toMetrics(researchMetrics, copy), [copy, researchMetrics]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getApprovedResearchFeedback()
+      .then((items) => {
+        if (!cancelled) {
+          setApprovedFeedbackItems(items.map((item) => toFeedbackItem(item, copy)).filter((item): item is FeedbackItem => item !== null));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setApprovedFeedbackItems([]);
+        }
+      });
+
+    getResearchFeedbackMetrics()
+      .then((metrics) => {
+        if (!cancelled) {
+          setResearchMetrics(metrics);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setResearchMetrics(defaultResearchMetrics);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [copy]);
+
   return (
     <main className={styles.page}>
-      <SiteHeaderOverlay logoHref="/" activeNav="research" />
+      <SiteHeaderOverlay logoHref="/" activeNav="research" localized lang={lang} onLanguageChange={changeLanguage} />
       <div className={styles.mobileHeaderShell}>
-        <SiteHeader variant="mobile" logoHref="/" />
+        <SiteHeader variant="mobile" logoHref="/" localized lang={lang} onLanguageChange={changeLanguage} />
       </div>
       <div className={styles.canvas}>
-        <HeroSection />
-        <MetricsSection />
-        <ResearchGuideSection />
-        <FeedbackSection />
-        <CitySection />
-        <ShareSection />
+        <HeroSection copy={copy} />
+        <MetricsSection metrics={metrics} label={copy.metricsLabel} />
+        <ResearchGuideSection copy={copy} />
+        <FeedbackSection items={approvedFeedbackItems} copy={copy} />
+        <CitySection cities={researchMetrics.regions} copy={copy} />
+        <ShareSection copy={copy} />
         <ResearchFooter />
       </div>
     </main>
   );
+}
+
+function limitFeedbackText(value: string) {
+  const chars = Array.from(value);
+  if (chars.length <= feedbackMaxLength) {
+    return value;
+  }
+  return chars.slice(0, feedbackMaxLength).join("");
+}
+
+function getCharLength(value: string) {
+  return Array.from(value).length;
+}
+
+function toMetrics(metrics: ResearchFeedbackMetrics, copy: ResearchMessages): Metric[] {
+  return [
+    { value: String(metrics.userCount), label: copy.metricLabels.userCount, icon: "people" },
+    { value: String(metrics.approvedFeedbackCount), label: copy.metricLabels.approvedFeedbackCount, icon: "comment" },
+    { value: String(metrics.coveredRegionCount), label: copy.metricLabels.coveredRegionCount, icon: "location" },
+    { value: `${metrics.voluntaryPercent}%`, label: copy.metricLabels.voluntaryPercent, icon: "heart" }
+  ];
+}
+
+function toFeedbackItem(item: ApprovedResearchFeedback, copy: ResearchMessages): FeedbackItem | null {
+  const body = item.feedbackText.trim();
+  if (!body) {
+    return null;
+  }
+
+  return {
+    city: item.displayRegion || copy.feedback.anonymousRegion,
+    body,
+    tag: resolveFeedbackTag(item, copy)
+  };
+}
+
+function resolveFeedbackTag(item: ApprovedResearchFeedback, copy: ResearchMessages) {
+  const primaryType = item.feedbackType.split(",").map((value) => value.trim()).find(Boolean);
+  if (primaryType) {
+    if (primaryType in copy.feedback.typeLabels) {
+      return copy.feedback.typeLabels[primaryType as keyof ResearchMessages["feedback"]["typeLabels"]];
+    }
+
+    return primaryType;
+  }
+
+  return copy.feedback.ratingLabels[item.rating] ?? copy.feedback.anonymousTag;
+}
+
+function resolveSubmitErrorMessage(error: unknown, copy: ResearchMessages) {
+  if (error instanceof ApiFetchError) {
+    if (error.code === "UNAUTHORIZED") {
+      return copy.share.errors.unauthorized;
+    }
+    if (error.code === "RATE_LIMITED") {
+      return copy.share.errors.rateLimited;
+    }
+    if (error.code === "BAD_REQUEST" || error.code === "VALIDATION_FAILED") {
+      return copy.share.errors.badRequest;
+    }
+  }
+
+  return copy.share.errors.fallback;
 }

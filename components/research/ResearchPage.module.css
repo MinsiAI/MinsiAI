@@ -787,9 +787,33 @@
   width: min(340px, 100%);
 }
 
+.submitButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
 .submitButton svg {
   width: 22px;
   height: 22px;
+}
+
+.submitStatus {
+  grid-column: 1 / -1;
+  margin: -4px 0 0;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: var(--minsi-type-body-sm-size);
+  line-height: var(--minsi-type-body-sm-line);
+}
+
+.submitStatusSuccess {
+  background: color-mix(in srgb, var(--minsi-success) 12%, var(--minsi-white));
+  color: var(--minsi-success);
+}
+
+.submitStatusError {
+  background: color-mix(in srgb, var(--minsi-danger) 12%, var(--minsi-white));
+  color: var(--minsi-danger);
 }
 
 .formSafety {

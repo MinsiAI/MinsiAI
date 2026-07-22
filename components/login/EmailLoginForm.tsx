@@ -1,7 +1,10 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { loginWithEmailCode, resolveSafeRedirectPath, sendEmailCode } from "../../lib/auth/login-api";
+import type { LoginMessages } from "../../lib/i18n/messages";
 import { MinsiButton } from "../site/MinsiButton";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -15,7 +18,12 @@ function LockIcon() {
   );
 }
 
-export function EmailLoginForm() {
+interface EmailLoginFormProps {
+  copy: LoginMessages["email"];
+}
+
+export function EmailLoginForm({ copy }: EmailLoginFormProps) {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
@@ -24,8 +32,6 @@ export function EmailLoginForm() {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const sendTimerRef = useRef<number | null>(null);
-  const submitTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (remainingSeconds <= 0) return undefined;
@@ -33,25 +39,28 @@ export function EmailLoginForm() {
     return () => window.clearTimeout(timer);
   }, [remainingSeconds]);
 
-  useEffect(() => {
-    return () => {
-      if (sendTimerRef.current) window.clearTimeout(sendTimerRef.current);
-      if (submitTimerRef.current) window.clearTimeout(submitTimerRef.current);
-    };
-  }, []);
-
   function validateEmail() {
     if (!emailPattern.test(email.trim())) {
-      setError("这个邮箱格式好像不太对。");
+      setError(copy.invalidEmail);
       setMessage("");
       return false;
     }
     return true;
   }
 
-  function handleSendCode() {
+  function handleInputChange(value: string) {
+    if (codeSent) {
+      setCode(value.slice(0, 8));
+    } else {
+      setEmail(value);
+    }
+
+    if (error) setError("");
+  }
+
+  async function handleSendCode() {
     if (remainingSeconds > 0) {
-      setError("发送太频繁了，可以稍后再试一下。");
+      setError(copy.rateLimited);
       setMessage("");
       return;
     }
@@ -60,19 +69,29 @@ export function EmailLoginForm() {
     setError("");
     setMessage("");
     setSendLoading(true);
-    sendTimerRef.current = window.setTimeout(() => {
-      setSendLoading(false);
+    try {
+      await sendEmailCode(email.trim());
       setCodeSent(true);
       setRemainingSeconds(60);
-      setMessage("验证码已经发送，请留意邮箱。");
-    }, 520);
+      setMessage(copy.codeSent);
+    } catch {
+      setError(copy.sendFailed);
+      setMessage("");
+    } finally {
+      setSendLoading(false);
+    }
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!codeSent) {
+      await handleSendCode();
+      return;
+    }
+
     if (!validateEmail()) return;
     if (!codeSent || code.trim().length === 0) {
-      setError("验证码好像不太对，可以再检查一下。");
+      setError(copy.invalidCode);
       setMessage("");
       return;
     }
@@ -80,75 +99,55 @@ export function EmailLoginForm() {
     setError("");
     setMessage("");
     setSubmitLoading(true);
-    submitTimerRef.current = window.setTimeout(() => {
+    try {
+      const result = await loginWithEmailCode(email.trim(), code.trim());
+      if (!result.ok) {
+        setError(copy.invalidCode);
+        setMessage("");
+        return;
+      }
+
+      setMessage(copy.success);
+      const redirect = resolveSafeRedirectPath(new URLSearchParams(window.location.search).get("redirect"));
+      router.replace(redirect);
+    } catch {
+      setError(copy.invalidCode);
+      setMessage("");
+    } finally {
       setSubmitLoading(false);
-      setMessage("验证通过，正在进入 Minsi。");
-      // TODO: 接入真实登录后，由后端设置 HttpOnly Secure Cookie，再跳转到目标页面。
-    }, 620);
+    }
   }
 
   return (
     <form className="login-email-form mx-auto mt-[12px] w-full max-w-[510px]" onSubmit={handleSubmit} noValidate>
-      <label className="login-email-input flex min-h-[48px] items-center rounded-full border border-[var(--minsi-border)] bg-[var(--minsi-card-bg-strong)] px-5 text-[var(--minsi-muted)] transition focus-within:border-[var(--minsi-primary)] focus-within:shadow-[var(--shadow-focus)] md:min-h-[50px]">
-        <Image className="login-email-icon" src="/figma-assets/login-email.svg" alt="" width={18} height={17} draggable={false} />
-        <span className="sr-only">邮箱地址</span>
+      <label className="login-email-input flex min-h-[48px] items-center rounded-full border border-[var(--minsi-border)] bg-[var(--minsi-card-bg-strong)] px-5 text-[var(--minsi-muted)] transition focus-within:border-[var(--minsi-primary)] focus-within:shadow-[var(--shadow-focus)] md:min-h-[50px] lg:bg-transparent">
+        {codeSent ? <LockIcon /> : <Image className="login-email-icon" src="/figma-assets/login-email.svg" alt="" width={18} height={17} draggable={false} />}
+        <span className="sr-only">{codeSent ? copy.codeLabel : copy.emailLabel}</span>
         <input
-          value={email}
-          onChange={(event) => {
-            setEmail(event.target.value);
-            if (error) setError("");
-          }}
-          className="login-email-field min-w-0 flex-1 bg-transparent px-3 text-[15px] leading-none text-[var(--minsi-ink)] outline-none placeholder:text-[var(--minsi-muted)] md:text-[14px]"
-          type="email"
-          inputMode="email"
-          autoComplete="email"
-          placeholder="请输入邮箱地址"
+          value={codeSent ? code : email}
+          onChange={(event) => handleInputChange(event.target.value)}
+          className="login-email-field min-w-0 flex-1 bg-transparent px-3 text-[16px] leading-none text-[var(--minsi-ink)] outline-none placeholder:text-[var(--minsi-muted)]"
+          type={codeSent ? "text" : "email"}
+          inputMode={codeSent ? "numeric" : "email"}
+          autoComplete={codeSent ? "one-time-code" : "email"}
+          placeholder={codeSent ? copy.codePlaceholder : copy.emailPlaceholder}
         />
         <MinsiButton
-          type="button"
-          loading={sendLoading}
-          disabled={sendLoading || remainingSeconds > 0}
-          onClick={handleSendCode}
-          className="login-email-code-button min-h-[44px] shrink-0 border-l border-[var(--minsi-line)] pl-4 text-[14px] leading-none text-[var(--minsi-primary)] disabled:cursor-not-allowed disabled:opacity-60"
+          type={codeSent ? "submit" : "button"}
+          loading={codeSent ? submitLoading : sendLoading}
+          disabled={codeSent ? submitLoading : sendLoading || remainingSeconds > 0}
+          onClick={codeSent ? undefined : handleSendCode}
+          className="login-email-code-button min-h-[44px] shrink-0 border-l border-[var(--minsi-line)] pl-4 text-[15px] leading-none text-[var(--minsi-primary)] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {sendLoading ? "发送中" : remainingSeconds > 0 ? `${remainingSeconds}s` : "获取验证码"}
+          {codeSent ? (submitLoading ? copy.loginLoading : copy.login) : sendLoading ? copy.sending : remainingSeconds > 0 ? `${remainingSeconds}s` : copy.getCode}
         </MinsiButton>
       </label>
 
-      {codeSent ? (
-        <label className="mt-3 flex min-h-[48px] items-center rounded-full border border-[var(--minsi-border)] bg-[var(--minsi-card-bg-strong)] px-4 text-[var(--minsi-muted)] transition focus-within:border-[var(--minsi-primary)] focus-within:shadow-[var(--shadow-focus)] md:min-h-[50px]">
-          <LockIcon />
-          <span className="sr-only">邮箱验证码</span>
-          <input
-            value={code}
-            onChange={(event) => {
-              setCode(event.target.value);
-              if (error) setError("");
-            }}
-            className="min-w-0 flex-1 bg-transparent px-3 text-[15px] leading-none text-[var(--minsi-ink)] outline-none placeholder:text-[var(--minsi-muted)]"
-            type="text"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            placeholder="请输入验证码"
-          />
-        </label>
-      ) : null}
-
-      <p className="login-email-helper mt-[10px] text-center text-[14px] leading-7 text-[var(--minsi-muted)]">不用手机号，一个邮箱就可以开始</p>
+      <p className="login-email-helper mt-[10px] text-center text-[14px] leading-7 text-[var(--minsi-muted)]">{copy.helper}</p>
 
       {error ? <p className="mt-2 text-center text-[13px] leading-5 text-[var(--minsi-danger)]">{error}</p> : null}
       {message ? <p className="mt-2 text-center text-[13px] leading-5 text-[var(--minsi-success)]">{message}</p> : null}
 
-      {codeSent ? (
-        <MinsiButton
-          type="submit"
-          loading={submitLoading}
-          disabled={submitLoading}
-          className="mt-3 flex min-h-[46px] w-full items-center justify-center rounded-full bg-[var(--minsi-primary)] px-5 text-[15px] font-medium text-[var(--minsi-white)] shadow-[var(--shadow-login)] disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {submitLoading ? "验证中" : "进入 Minsi"}
-        </MinsiButton>
-      ) : null}
     </form>
   );
 }

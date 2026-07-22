@@ -1,5 +1,13 @@
+"use client";
+
 import Image from "next/image";
-import type { ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, type ReactNode } from "react";
+import { getSafetyResources, isPlaceholderSafetyResource, type SafetyResource } from "../../lib/api/safety";
+import { pushProtectedRoute } from "../../lib/auth/protected-navigation";
+import { privacyMessages, type PrivacyMessages } from "../../lib/i18n/messages";
+import type { MinsiLang } from "../../lib/i18n/language";
+import { useLanguagePreference } from "../../lib/i18n/useLanguagePreference";
 import { GlassCard } from "../site/GlassCard";
 import { MinsiButton } from "../site/MinsiButton";
 import { SafetyNotice } from "../site/SafetyNotice";
@@ -22,160 +30,7 @@ interface InfoItem {
   text: string;
 }
 
-interface QuestionItem {
-  question: string;
-  answer: string;
-}
-
-const safetyText = "Minsi 不保存你的聊天内容，也不是医生或心理治疗师。如遇危险情况，请及时联系可信任的大人或专业机构。";
-
-const commitmentCards: CommitmentCard[] = [
-  {
-    icon: "chat",
-    title: "默认不保存",
-    text: "每一次聊天都是临时会话，不会长期保留。"
-  },
-  {
-    icon: "shield",
-    title: "退出即可清除",
-    text: "离开聊天后，对话内容会自动清除，无法恢复。"
-  },
-  {
-    icon: "feather",
-    title: "不用手动管理",
-    text: "没有历史记录，也不需要你再去删除，轻松无负担。"
-  }
-];
-
-const dataItems: InfoItem[] = [
-  {
-    icon: "shield",
-    title: "不保存你的会话内容",
-    text: "所有聊天只在会话期间存在，退出后自动清除。"
-  },
-  {
-    icon: "lock",
-    title: "不用于训练模型",
-    text: "你的聊天内容不会用于优化或训练任何 AI 模型。"
-  },
-  {
-    icon: "hidden",
-    title: "不与他人共享",
-    text: "我们不会将你的聊天内容展示或提供给其他用户。"
-  },
-  {
-    icon: "session",
-    title: "尽力保护你的隐私",
-    text: "我们采用合理的技术与管理措施，保护你的信息安全。"
-  }
-];
-
-const modeItems: InfoItem[] = [
-  {
-    icon: "clock",
-    title: "临时会话",
-    text: "不会保留历史"
-  },
-  {
-    icon: "trash",
-    title: "退出即清除",
-    text: "离开后自动清除"
-  },
-  {
-    icon: "heart",
-    title: "安心表达",
-    text: "放心说、慢慢说"
-  }
-];
-
-const canDoItems: InfoItem[] = [
-  {
-    icon: "heart",
-    title: "陪你表达情绪",
-    text: "不评判，不催促"
-  },
-  {
-    icon: "session",
-    title: "帮你整理想法",
-    text: "把混乱慢慢说清"
-  },
-  {
-    icon: "check",
-    title: "提供温柔陪伴",
-    text: "适合想被听见的时候"
-  },
-  {
-    icon: "home",
-    title: "提醒照顾自己",
-    text: "鼓励休息和求助"
-  }
-];
-
-const dangerItems: InfoItem[] = [
-  {
-    icon: "person",
-    title: "联系可信任的大人",
-    text: "不要独自承受危险"
-  },
-  {
-    icon: "phone",
-    title: "联系当地紧急服务",
-    text: "需要时立刻求助"
-  },
-  {
-    icon: "help",
-    title: "寻求专业机构帮助",
-    text: "把安全放在第一位"
-  },
-  {
-    icon: "shield",
-    title: "离开不安全环境",
-    text: "先到有人陪伴的地方"
-  }
-];
-
-const questions: QuestionItem[] = [
-  {
-    question: "Minsi 会保存我的聊天记录吗？",
-    answer: "不会。聊天内容不保存，退出后自动清除。"
-  },
-  {
-    question: "退出之后还能找回之前的聊天吗？",
-    answer: "不能。为了减少记录压力，离开聊天后本次对话无法恢复。"
-  },
-  {
-    question: "我需要手动删除记录吗？",
-    answer: "不需要。Minsi 会在你退出聊天后自动清除本次内容。"
-  },
-  {
-    question: "别人能看到我的聊天内容吗？",
-    answer: "不会。我们不会把你的聊天内容展示或提供给其他用户。"
-  },
-  {
-    question: "Minsi 是医生或心理治疗师吗？",
-    answer: "不是。Minsi 可以陪你表达，但不能替代现实中的专业帮助。"
-  },
-  {
-    question: "我可以不登录使用吗？",
-    answer: "可以。你可以在不保存聊天内容的前提下开始临时会话。"
-  },
-  {
-    question: "Minsi 会把聊天内容用于训练 AI 吗？",
-    answer: "不会。你的聊天内容不会用于优化或训练任何 AI 模型。"
-  },
-  {
-    question: "聊天内容会被用于广告或商业用途吗？",
-    answer: "不会。Minsi 不用聊天内容做广告画像或商业推送。"
-  },
-  {
-    question: "我可以选择保存聊天记录吗？",
-    answer: "当前不支持保存聊天记录。这个页面的默认边界就是不留下记录。"
-  },
-  {
-    question: "未成年人使用 Minsi 安全吗？",
-    answer: "遇到危险、胁迫或伤害自己/他人的想法时，请马上联系可信任的大人或当地紧急服务。"
-  }
-];
+type SafetyResourcesStatus = "loading" | "ready" | "error";
 
 const assetIconSrc: Record<AssetIconName, string> = {
   chat: "/figma-assets/icon-chat.svg",
@@ -323,7 +178,7 @@ function CommitmentCard({ icon, title, text }: CommitmentCard) {
   );
 }
 
-function InfoList({ items, compact = false }: { items: InfoItem[]; compact?: boolean }) {
+function InfoList({ items, compact = false }: { items: readonly InfoItem[]; compact?: boolean }) {
   return (
     <ul className={compact ? styles.compactList : styles.infoList}>
       {items.map((item) => (
@@ -341,76 +196,160 @@ function InfoList({ items, compact = false }: { items: InfoItem[]; compact?: boo
   );
 }
 
-function PrivacyModeCard() {
+function PrivacyModeCard({ copy }: { copy: PrivacyMessages }) {
   return (
-    <aside className={styles.modePanel} aria-label="当前隐私模式">
-      <h2>当前隐私模式</h2>
+    <aside className={styles.modePanel} aria-label={copy.mode.ariaLabel}>
+      <h2>{copy.mode.title}</h2>
       <div className={styles.modeCard}>
         <div>
           <span className={styles.liveDot} aria-hidden="true" />
-          <strong>临时聊天中</strong>
-          <p>聊天内容不会保存</p>
-          <p>退出后自动清除</p>
+          <strong>{copy.mode.live}</strong>
+          {copy.mode.lines.map((line) => (
+            <p key={line}>{line}</p>
+          ))}
         </div>
         <Image className={styles.modeShield} src="/assets/about/boundary.png" alt="" width={146} height={167} draggable={false} />
       </div>
-      <InfoList items={modeItems} compact />
-      <p className={styles.modeHint}>此模式为默认设置，无法关闭，也无需设置。</p>
+      <InfoList items={copy.mode.items} compact />
+      <p className={styles.modeHint}>{copy.mode.hint}</p>
     </aside>
   );
 }
 
-function DataTreatmentSection() {
+function DataTreatmentSection({ copy }: { copy: PrivacyMessages }) {
   return (
     <GlassCard as="section" className={styles.dataCard} aria-labelledby="privacy-data-title">
       <div className={styles.dataCopy}>
         <SectionTitle>
-          <span id="privacy-data-title">我们如何对待你的数据</span>
+          <span id="privacy-data-title">{copy.data.title}</span>
         </SectionTitle>
-        <InfoList items={dataItems} />
+        <InfoList items={copy.data.items} />
         <p className={styles.dataFootnote}>
           <DataIcon name="lock" />
-          Minsi 的设计目标是：让你可以安心表达，而无需担心记录被保存。
+          {copy.data.footnote}
         </p>
       </div>
-      <PrivacyModeCard />
+      <PrivacyModeCard copy={copy} />
     </GlassCard>
   );
 }
 
-function BoundarySection() {
+function BoundarySection({ copy }: { copy: PrivacyMessages }) {
   return (
     <GlassCard as="section" className={styles.boundaryCard} id="safety-boundary" aria-labelledby="privacy-boundary-title">
       <div className={styles.boundaryImageWrap}>
         <Image className={styles.boundaryCloud} src="/figma-assets/cloud.png" alt="" width={360} height={268} sizes="(max-width: 767px) 180px, 240px" draggable={false} />
       </div>
       <div className={styles.boundaryCopy}>
-        <h2 id="privacy-boundary-title">Minsi 会陪你，但不会替代现实中的帮助</h2>
-        <p>Minsi 可以陪你慢慢说、写下想法、梳理表达。它不是医生或心理治疗师，也不能替代可信任的人或专业机构。</p>
+        <h2 id="privacy-boundary-title">{copy.boundary.title}</h2>
+        <p>{copy.boundary.body}</p>
       </div>
       <div className={styles.boundaryLists}>
         <div>
-          <h3>Minsi 可以做的</h3>
-          <InfoList items={canDoItems} compact />
+          <h3>{copy.boundary.canDoTitle}</h3>
+          <InfoList items={copy.boundary.canDo} compact />
         </div>
         <div>
-          <h3>遇到危险时</h3>
-          <InfoList items={dangerItems} compact />
+          <h3>{copy.boundary.dangerTitle}</h3>
+          <InfoList items={copy.boundary.danger} compact />
         </div>
       </div>
-      <SafetyNotice variant="mobile" className={styles.boundaryNotice} text={safetyText} />
+      <SafetyNotice variant="mobile" className={styles.boundaryNotice} text={copy.safetyText} />
     </GlassCard>
   );
 }
 
-function FaqSection() {
+function SafetyResourcesSection({ copy, lang }: { copy: PrivacyMessages; lang: MinsiLang }) {
+  const [status, setStatus] = useState<SafetyResourcesStatus>("loading");
+  const [resources, setResources] = useState<SafetyResource[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadResources() {
+      setStatus("loading");
+      try {
+        const nextResources = await getSafetyResources(lang);
+        if (!cancelled) {
+          setResources(nextResources);
+          setStatus("ready");
+        }
+      } catch {
+        if (!cancelled) {
+          setResources([]);
+          setStatus("error");
+        }
+      }
+    }
+
+    void loadResources();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [lang]);
+
+  const hasPlaceholderResources = status === "ready" && (resources.length === 0 || resources.some(isPlaceholderSafetyResource));
+
+  return (
+    <GlassCard as="section" className={styles.resourcesCard} id="safety-resources" aria-labelledby="privacy-resources-title">
+      <div className={styles.resourcesIntro}>
+        <SectionTitle>
+          <span id="privacy-resources-title">{copy.resources.title}</span>
+        </SectionTitle>
+        <p>{copy.resources.intro}</p>
+      </div>
+
+      {hasPlaceholderResources ? (
+        <div className={styles.resourceVerificationNotice} role="status">
+          <span className={styles.resourceNoticeIcon}>
+            <DataIcon name="shield" />
+          </span>
+          <span>
+            <strong>{copy.resources.verificationTitle}</strong>
+            <p>{copy.resources.verificationBody}</p>
+          </span>
+        </div>
+      ) : null}
+
+      {status === "loading" ? (
+        <p className={styles.resourceState}>{copy.resources.loading}</p>
+      ) : null}
+
+      {status === "error" ? (
+        <p className={styles.resourceState}>{copy.resources.error}</p>
+      ) : null}
+
+      {status === "ready" && resources.length > 0 ? (
+        <ul className={styles.resourcesList}>
+          {resources.map((resource) => {
+            const isPlaceholder = isPlaceholderSafetyResource(resource);
+
+            return (
+              <li className={styles.resourceItem} key={resource.id}>
+                <strong>{resource.name}</strong>
+                <span className={styles.resourceMeta}>{isPlaceholder ? copy.resources.placeholderAvailable : resource.available}</span>
+                <span className={`${styles.resourceContact} ${isPlaceholder ? styles.resourceContactHidden : ""}`}>
+                  {isPlaceholder ? copy.resources.placeholderContact : resource.contact}
+                </span>
+                {resource.disclaimer ? <small className={styles.resourceDisclaimer}>{resource.disclaimer}</small> : null}
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+    </GlassCard>
+  );
+}
+
+function FaqSection({ copy }: { copy: PrivacyMessages }) {
   return (
     <GlassCard as="section" className={styles.faqCard} id="privacy-questions" aria-labelledby="privacy-faq-title">
       <SectionTitle>
-        <span id="privacy-faq-title">你可能关心的问题</span>
+        <span id="privacy-faq-title">{copy.faq.title}</span>
       </SectionTitle>
       <div className={styles.faqGrid}>
-        {questions.map((item) => (
+        {copy.faq.items.map((item) => (
           <details className={styles.faqItem} key={item.question}>
             <summary>
               <span>
@@ -426,21 +365,21 @@ function FaqSection() {
   );
 }
 
-function RulesCallout() {
+function RulesCallout({ copy }: { copy: PrivacyMessages }) {
   return (
     <GlassCard as="section" className={styles.rulesCard} aria-labelledby="privacy-rules-title">
       <Image className={styles.rulesIcon} src="/figma-assets/login-lock.svg" alt="" width={112} height={112} draggable={false} />
       <div className={styles.rulesCopy}>
-        <h2 id="privacy-rules-title">想了解完整规则？</h2>
-        <p>查看《隐私政策》和《用户协议》</p>
-        <small>我们会尽量用清楚、简单的语言解释每一项规则。</small>
+        <h2 id="privacy-rules-title">{copy.rules.title}</h2>
+        <p>{copy.rules.body}</p>
+        <small>{copy.rules.note}</small>
       </div>
       <div className={styles.rulesActions}>
         <MinsiButton type="button" variant="ghost" size="sm" className={`minsi-button ${styles.policyButton}`}>
-          隐私政策
+          {copy.rules.privacy}
         </MinsiButton>
         <MinsiButton type="button" variant="ghost" size="sm" className={`minsi-button ${styles.policyButton}`}>
-          用户协议
+          {copy.rules.terms}
         </MinsiButton>
       </div>
     </GlassCard>
@@ -448,11 +387,34 @@ function RulesCallout() {
 }
 
 export function PrivacySafetyPage() {
+  const router = useRouter();
+  const { lang, changeLanguage } = useLanguagePreference();
+  const copy = privacyMessages[lang];
+  const [isChatOpening, setIsChatOpening] = useState(false);
+  const [chatOpenError, setChatOpenError] = useState("");
+
+  async function handleStartChat() {
+    if (isChatOpening) {
+      return;
+    }
+
+    setChatOpenError("");
+    setIsChatOpening(true);
+
+    try {
+      await pushProtectedRoute(router, "/chat");
+    } catch {
+      setChatOpenError(copy.hero.error);
+    } finally {
+      setIsChatOpening(false);
+    }
+  }
+
   return (
     <main className={styles.page}>
-      <SiteHeaderOverlay activeNav="privacy" showNav showLogin logoHref="/" />
+      <SiteHeaderOverlay activeNav="privacy" showNav showLogin logoHref="/" localized lang={lang} onLanguageChange={changeLanguage} />
       <div className={styles.mobileHeaderShell}>
-        <SiteHeader variant="mobile" logoHref="/" />
+        <SiteHeader variant="mobile" logoHref="/" localized lang={lang} onLanguageChange={changeLanguage} />
       </div>
 
       <div className={styles.canvas}>
@@ -461,24 +423,42 @@ export function PrivacySafetyPage() {
           <div className={styles.heroVeil} aria-hidden="true" />
           <div className={styles.heroCopy}>
             <h1 id="privacy-hero-title">
-              <span>你可以放心说，</span>
-              <strong>不用留下记录</strong>
+              <span>{copy.hero.titleLines[0]}</span>
+              <strong>{copy.hero.titleLines[1]}</strong>
             </h1>
             <Image className={styles.heroHeart} src="/figma-assets/heart.svg" alt="" width={44} height={44} draggable={false} />
-            <p>Minsi 的所有会话都不会保存。你退出聊天后，本次对话内容会自动清除。</p>
+            <p>{copy.hero.body}</p>
+            <MinsiButton
+              type="button"
+              variant="primary"
+              size="lg"
+              className={`minsi-button ${styles.heroChatButton}`}
+              loading={isChatOpening}
+              aria-busy={isChatOpening}
+              aria-describedby={chatOpenError ? "privacy-chat-entry-error" : undefined}
+              onClick={handleStartChat}
+            >
+              {isChatOpening ? copy.hero.checking : copy.hero.startChat}
+            </MinsiButton>
+            {chatOpenError ? (
+              <span id="privacy-chat-entry-error" className={styles.heroChatError} role="status" aria-live="polite">
+                {chatOpenError}
+              </span>
+            ) : null}
           </div>
         </section>
 
-        <section className={styles.commitments} aria-label="隐私承诺">
-          {commitmentCards.map((card) => (
+        <section className={styles.commitments} aria-label={copy.commitmentsLabel}>
+          {copy.commitments.map((card) => (
             <CommitmentCard key={card.title} {...card} />
           ))}
         </section>
 
-        <DataTreatmentSection />
-        <BoundarySection />
-        <FaqSection />
-        <RulesCallout />
+        <DataTreatmentSection copy={copy} />
+        <BoundarySection copy={copy} />
+        <SafetyResourcesSection copy={copy} lang={lang} />
+        <FaqSection copy={copy} />
+        <RulesCallout copy={copy} />
 
         <footer className={styles.footer}>
           <p>© 2026 Minsi.ai. All rights reserved.</p>

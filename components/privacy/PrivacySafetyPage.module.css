@@ -88,6 +88,18 @@
   line-height: var(--minsi-type-lead-line);
 }
 
+.heroChatButton {
+  margin-top: 36px;
+}
+
+.heroChatError {
+  display: block;
+  margin-top: 12px;
+  color: var(--minsi-danger);
+  font-size: var(--minsi-type-body-sm-size);
+  line-height: var(--minsi-type-body-sm-line);
+}
+
 .commitments {
   position: relative;
   z-index: 3;
@@ -436,6 +448,141 @@
   text-align: center;
 }
 
+.resourcesCard {
+  display: grid;
+  width: calc(100% - var(--privacy-edge) - var(--privacy-edge));
+  margin: 20px auto 0;
+  gap: 18px;
+  padding: 30px 34px;
+}
+
+.resourcesIntro {
+  display: grid;
+  gap: 12px;
+}
+
+.resourcesIntro p {
+  max-width: 780px;
+  margin: 0;
+  color: var(--minsi-muted);
+  font-size: var(--minsi-type-body-size);
+  line-height: var(--minsi-type-body-line);
+}
+
+.resourceVerificationNotice,
+.resourceState {
+  border: 1px solid var(--minsi-chat-border);
+  border-radius: 18px;
+  background: var(--minsi-chat-card-soft);
+}
+
+.resourceVerificationNotice {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 16px;
+}
+
+.resourceNoticeIcon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: var(--radius-full);
+  background: var(--minsi-white);
+  color: var(--minsi-primary);
+}
+
+.resourceNoticeIcon svg {
+  width: 27px;
+  height: 27px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.resourceVerificationNotice strong {
+  display: block;
+  color: var(--minsi-ink);
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.resourceVerificationNotice p,
+.resourceState {
+  color: var(--minsi-muted);
+  font-size: var(--minsi-type-body-sm-size);
+  line-height: var(--minsi-type-body-sm-line);
+}
+
+.resourceVerificationNotice p {
+  margin: 4px 0 0;
+}
+
+.resourceState {
+  margin: 0;
+  padding: 16px;
+}
+
+.resourcesList {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  list-style: none;
+}
+
+.resourceItem {
+  min-width: 0;
+  border: 1px solid var(--minsi-chat-border);
+  border-radius: 18px;
+  background: var(--minsi-white);
+  padding: 16px;
+}
+
+.resourceItem strong {
+  display: block;
+  color: var(--minsi-ink);
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+.resourceMeta {
+  display: block;
+  margin-top: 6px;
+  color: var(--minsi-muted);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.resourceContact {
+  display: inline-flex;
+  max-width: 100%;
+  margin-top: 12px;
+  border-radius: var(--radius-full);
+  background: var(--minsi-chat-module-bg);
+  padding: 8px 12px;
+  color: var(--minsi-primary);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.resourceContactHidden {
+  color: var(--minsi-muted);
+}
+
+.resourceDisclaimer {
+  display: block;
+  margin-top: 10px;
+  color: var(--minsi-muted);
+  font-size: 12px;
+  font-style: normal;
+  line-height: 18px;
+}
+
 .faqCard {
   width: calc(100% - var(--privacy-edge) - var(--privacy-edge));
   margin: 20px auto 0;
@@ -652,6 +799,11 @@
     margin-top: 16px;
   }
 
+  .heroChatButton {
+    margin-top: 24px;
+    padding-inline: 22px;
+  }
+
   .heroCopy h1 {
     gap: var(--minsi-mobile-hero-title-gap);
     font-size: var(--minsi-mobile-hero-title-size);
@@ -661,6 +813,7 @@
   .commitments,
   .dataCard,
   .boundaryCard,
+  .resourcesCard,
   .faqCard,
   .rulesCard,
   .footer {
@@ -788,6 +941,24 @@
   .boundaryNotice {
     align-items: flex-start;
     text-align: left;
+  }
+
+  .resourcesCard {
+    padding: 24px 20px;
+  }
+
+  .resourceVerificationNotice {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  .resourceNoticeIcon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .resourceNoticeIcon svg {
+    width: 22px;
+    height: 22px;
   }
 
   .faqCard {

@@ -142,6 +142,21 @@ export function LoginShell() {
     router.push("/chat");
   }, [router]);
 
+  const handleQrStateChange = useCallback((nextSnapshot: QRLoginCardSnapshot) => {
+    setQrSnapshot((currentSnapshot) => {
+      if (
+        currentSnapshot?.provider === nextSnapshot.provider &&
+        currentSnapshot.status === nextSnapshot.status &&
+        currentSnapshot.remainingSeconds === nextSnapshot.remainingSeconds &&
+        currentSnapshot.errorMessage === nextSnapshot.errorMessage
+      ) {
+        return currentSnapshot;
+      }
+
+      return nextSnapshot;
+    });
+  }, []);
+
   return (
     <main className="relative min-h-[100svh] overflow-hidden bg-[linear-gradient(180deg,var(--minsi-bg)_0%,var(--minsi-bg-soft)_45%,var(--minsi-mobile-bg-end)_100%)] px-[var(--space-mobile-x)] pb-[max(18px,env(safe-area-inset-bottom))] pt-0 lg:px-0">
       <BackgroundDecor />
@@ -172,8 +187,8 @@ export function LoginShell() {
               <LoginTitle />
 
               <div className="mx-auto mt-[24px] grid w-full max-w-[548px] gap-3 sm:grid-cols-2 sm:gap-7">
-                <QRLoginCard provider="wechat" active={activeProvider === "wechat"} onActivate={setActiveProvider} onSuccess={handleLoginSuccess} onStateChange={setQrSnapshot} />
-                <QRLoginCard provider="qq" active={activeProvider === "qq"} onActivate={setActiveProvider} onSuccess={handleLoginSuccess} onStateChange={setQrSnapshot} />
+                <QRLoginCard provider="wechat" active={activeProvider === "wechat"} onActivate={setActiveProvider} onSuccess={handleLoginSuccess} onStateChange={handleQrStateChange} />
+                <QRLoginCard provider="qq" active={activeProvider === "qq"} onActivate={setActiveProvider} onSuccess={handleLoginSuccess} onStateChange={handleQrStateChange} />
               </div>
 
               <QRStatusLine snapshot={qrSnapshot} />

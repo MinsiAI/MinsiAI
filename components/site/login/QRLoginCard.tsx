@@ -3,7 +3,8 @@
 import { useEffect } from "react";
 import { GlassCard } from "../GlassCard";
 import { MinsiButton } from "../MinsiButton";
-import { getMockQrPreviewImage, type QRProvider } from "../../../lib/auth/login-api";
+import type { QRProvider } from "../../../lib/auth/login-api";
+import { useOAuthQrImage } from "./useOAuthQrImage";
 import { useQRLoginPolling, type QRLoginCardStatus } from "./useQRLoginPolling";
 
 export interface QRLoginCardProps {
@@ -61,10 +62,9 @@ function ProviderIcon({ provider, className = "" }: { provider: QRProvider; clas
 
 export function QRLoginCard({ provider, active, onActivate, onSuccess, onStateChange }: QRLoginCardProps) {
   const copy = providerCopy[provider];
-  const { status, qrImageUrl, remainingSeconds, errorMessage, refresh } = useQRLoginPolling({ provider, active, onSuccess });
-  const previewImageUrl = getMockQrPreviewImage(provider);
-  const needsRefresh = active && (status === "expired" || status === "error");
-  const displayQrImageUrl = qrImageUrl ?? previewImageUrl;
+  const { status, authorizeUrl, qrUrl, remainingSeconds, errorMessage, refresh } = useQRLoginPolling({ provider, active, onSuccess });
+  const { imageUrl: qrImageUrl, error: qrImageError } = useOAuthQrImage(qrUrl ?? authorizeUrl);
+  const needsRefresh = active && (status === "expired" || status === "error" || qrImageError);
 
   useEffect(() => {
     if (!active) {
@@ -101,7 +101,11 @@ export function QRLoginCard({ provider, active, onActivate, onSuccess, onStateCh
 
       <div className="mt-2 flex flex-col items-center">
         <div className="relative flex aspect-square w-full max-w-[160px] items-center justify-center rounded-[18px] bg-[var(--minsi-white)] p-2 shadow-[var(--shadow-floating)]">
-          <img className="h-full w-full object-contain" src={displayQrImageUrl} alt={`${copy.title}二维码`} draggable={false} />
+          {qrImageUrl ? (
+            <img className="h-[88%] w-[88%] rounded-[14px] object-contain" src={qrImageUrl} alt={`${copy.title}二维码`} draggable={false} />
+          ) : needsRefresh ? null : (
+            <span className="text-center text-[13px] leading-5 text-[var(--minsi-muted)]">正在生成二维码</span>
+          )}
 
           {active && status === "loading" ? (
             <div className="absolute inset-3 flex flex-col items-center justify-center rounded-[16px] bg-[var(--minsi-white)] text-center text-[13px] leading-5 text-[var(--minsi-muted)]">
@@ -118,7 +122,7 @@ export function QRLoginCard({ provider, active, onActivate, onSuccess, onStateCh
 
           {needsRefresh ? (
             <div className="absolute inset-3 flex flex-col items-center justify-center rounded-[16px] bg-[color-mix(in_srgb,var(--minsi-white)_92%,transparent)] px-3 text-center">
-              <p className="text-[13px] leading-5 text-[var(--minsi-muted)]">{status === "expired" ? "二维码过期了" : "加载不太顺利"}</p>
+              <p className="text-[13px] leading-5 text-[var(--minsi-muted)]">{status === "expired" ? "二维码过期了" : "二维码生成失败"}</p>
               <MinsiButton
                 type="button"
                 onClick={refresh}

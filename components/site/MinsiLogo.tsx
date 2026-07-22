@@ -7,6 +7,7 @@ export interface MinsiLogoProps {
   size?: "sm" | "md" | "lg";
   priority?: boolean;
   className?: string;
+  ariaLabel?: string;
 }
 
 const logoSizeClasses = {
@@ -24,11 +25,11 @@ const logoSizeClasses = {
   }
 };
 
-export function MinsiLogo({ href = "/", size = "md", priority = false, className = "" }: MinsiLogoProps) {
+export function MinsiLogo({ href = "/", size = "md", priority = false, className = "", ariaLabel = "Minsi 首页" }: MinsiLogoProps) {
   const classes = logoSizeClasses[size];
 
   return (
-    <a className={`${className ? `${className} ` : ""}flex min-h-[44px] items-center`} href={href} aria-label="Minsi 首页">
+    <a className={`${className ? `${className} ` : ""}flex min-h-[44px] items-center`} href={href} aria-label={ariaLabel}>
       <Image className={`${classes.mark} minsi-logo-mark`} src={asset("logo-mark.png")} alt="" width={72} height={42} priority={priority} draggable={false} />
       <Image className={`${classes.text} minsi-logo-text`} src={asset("logo-text.png")} alt="minsi.ai" width={170} height={38} priority={priority} draggable={false} />
     </a>

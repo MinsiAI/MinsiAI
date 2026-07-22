@@ -12,12 +12,15 @@ export interface EmotionLanguageCarouselItem {
 }
 
 interface EmotionLanguageCarouselProps {
-  items: EmotionLanguageCarouselItem[];
+  items: readonly EmotionLanguageCarouselItem[];
+  ariaLabel: string;
+  dotsLabel: string;
+  viewLabelPrefix: string;
 }
 
 const aboutAsset = (name: string) => `/assets/about/${name}`;
 
-export function EmotionLanguageCarousel({ items }: EmotionLanguageCarouselProps) {
+export function EmotionLanguageCarousel({ items, ariaLabel, dotsLabel, viewLabelPrefix }: EmotionLanguageCarouselProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const activeIndexRef = useRef(0);
   const scrollFrameRef = useRef<number | null>(null);
@@ -105,7 +108,7 @@ export function EmotionLanguageCarousel({ items }: EmotionLanguageCarouselProps)
   }, []);
 
   return (
-    <div className="about-emotion-carousel" aria-roledescription="carousel" aria-label="Minsi 的情绪语言">
+    <div className="about-emotion-carousel" aria-roledescription="carousel" aria-label={ariaLabel}>
       <div className="about-emotion-track" ref={trackRef} onScroll={handleScroll}>
         {items.map((state, index) => (
           <article className="about-emotion-item about-emotion-slide" key={state.title} data-emotion-slide={index} aria-label={state.title}>
@@ -115,10 +118,10 @@ export function EmotionLanguageCarousel({ items }: EmotionLanguageCarouselProps)
           </article>
         ))}
       </div>
-      <div className="about-emotion-dots" aria-label="切换情绪语言卡片">
+      <div className="about-emotion-dots" aria-label={dotsLabel}>
         {items.map((state, index) => (
           <button
-            aria-label={`查看${state.title}`}
+            aria-label={`${viewLabelPrefix}${state.title}`}
             aria-current={activeIndex === index ? "true" : undefined}
             className="about-emotion-dot"
             key={state.title}
