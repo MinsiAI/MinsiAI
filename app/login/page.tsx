@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "登录 Minsi.ai | 安全进入你的表达空间",
     description: "不用真实姓名，也不用手机号，安全进入 Minsi.ai。",
-    images: ["/assets/brand/og-home.png"]
+    images: ["/figma-assets/login-pc-bg.png"]
   }
 };
 

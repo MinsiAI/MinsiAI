@@ -1,0 +1,7 @@
+allowBuilds:
+  sharp: true
+  unrs-resolver: true
+
+overrides:
+  "next>postcss": 8.5.14
+  "next>sharp": 0.35.0

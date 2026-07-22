@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { RequireAuth } from "../../components/auth/RequireAuth";
 import { TextChatPage } from "../../components/chat/TextChatPage";
 
 export const metadata: Metadata = {
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function ChatPage() {
-  return <TextChatPage />;
+  return (
+    <RequireAuth>
+      <TextChatPage />
+    </RequireAuth>
+  );
 }

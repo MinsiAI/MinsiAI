@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { RequireAuth } from "../../../components/auth/RequireAuth";
 import { VoiceChatPage } from "../../../components/chat/VoiceChatPage";
 
 export const metadata: Metadata = {
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function ChatVoicePage() {
-  return <VoiceChatPage />;
+  return (
+    <RequireAuth>
+      <VoiceChatPage />
+    </RequireAuth>
+  );
 }
