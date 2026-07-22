@@ -30,14 +30,16 @@ I designed and implemented the product across the main product and engineering l
 
 ## Product Surfaces
 
-| Surface | What it shows | Preview |
+| Surface | Route or area | What it demonstrates |
 | --- | --- | --- |
-| Home | Product entry and first impression | ![Home visual](public/figma-assets/bg-pc.png) |
-| Text chat | Login-gated reflection chat surface | ![Text chat visual](public/figma-assets/chat-minsi-card.png) |
-| Voice chat | Voice-first interaction path with session handling | ![Voice visual](public/figma-assets/voice-panel-cloud.png) |
-| Research feedback | Anonymous feedback and moderated public display | ![Research visual](public/assets/research/hero-cloud-logo-balanced.png) |
-| Privacy and safety | Clear privacy boundary and safety framing | ![Privacy visual](public/assets/privacy/hero-bg.png) |
-| Admin moderation | Internal review tools for research feedback | Login-gated operational surface; no public sample data screenshot is committed. |
+| Home | `/` | Product positioning, language switching, and entry into the chat experience. |
+| Text chat | `/chat` | Login-gated reflection chat, loading/error/retry states, and request-local conversation context. |
+| Voice chat | `/chat/voice` | Temporary voice session handling, transcription flow, and handoff into the chat service. |
+| Research feedback | `/research` | Anonymous feedback submission, approved-only public display, and separation from private chat. |
+| Privacy and safety | `/privacy` | User-facing explanation of privacy boundaries, safety expectations, and product limits. |
+| Admin moderation | `/admin`, `/admin/feedback` | Login-gated moderation tools for reviewing research feedback before public display. |
+
+The live demo is the best current visual reference. Static screenshots will be added after the UI stabilizes; they should be full-page captures from real product routes, not raw design assets.
 
 ## Architecture
 
@@ -121,7 +123,7 @@ Next steps:
 - Add CI checks for frontend and backend builds
 - Add a dependency CVE scan for release preparation
 - Expand production observability without logging private content
-- Refresh screenshots from the deployed product as the UI stabilizes
+- Capture stable screenshots from deployed product routes
 - Continue user testing around clarity, tone, and safety copy
 
 ## Repository Notes
