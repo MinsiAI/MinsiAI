@@ -25,4 +25,4 @@ Minsi.ai helps students reflect on stress, emotions, and online identity through
 
 - Website: https://minsi.ai
 - X: https://x.com/Minsi_AI
-- Email: minsi@minsi.ai
+- Email: minsi.ai@outlook.com
