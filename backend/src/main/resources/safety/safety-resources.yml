@@ -1,0 +1,12 @@
+zh:
+  - id: cn-crisis-resource-placeholder
+    name: "待人工核实的本地危机支持资源"
+    contact: "PLACEHOLDER_DO_NOT_DEPLOY"
+    available: "NEEDS_HUMAN_VERIFICATION"
+    disclaimer: "上线前必须由人工核实资源名称、联系方式、适用地区和可用时间。"
+en:
+  - id: global-crisis-resource-placeholder
+    name: "Human-verified local crisis resource required"
+    contact: "PLACEHOLDER_DO_NOT_DEPLOY"
+    available: "NEEDS_HUMAN_VERIFICATION"
+    disclaimer: "Human verification is required before production use."

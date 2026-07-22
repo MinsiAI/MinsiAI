@@ -1,0 +1,94 @@
+spring:
+  application:
+    name: minsi-backend
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+  config:
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:backend/.env[.properties]
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  datasource:
+    url: ${MYSQL_URL:}
+    username: ${MYSQL_USERNAME:}
+    password: ${MYSQL_PASSWORD:}
+  data:
+    redis:
+      host: ${REDIS_HOST:}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+  sql:
+    init:
+      mode: ${SQL_INIT_MODE:always}
+      schema-locations: classpath:db/mysql/001-auth-users.sql
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+    include-exception: false
+
+minsi:
+  ai:
+    provider: ${AI_PROVIDER:openai}
+    api-key: ${AI_API_KEY:${OPENAI_API_KEY:}}
+    model: ${AI_MODEL:gpt-5.6-terra}
+    endpoint: ${AI_ENDPOINT:}
+    max-tokens: ${AI_MAX_TOKENS:240}
+    reasoning-effort: ${AI_REASONING_EFFORT:none}
+    connect-timeout-ms: ${AI_CONNECT_TIMEOUT_MS:5000}
+    read-timeout-ms: ${AI_READ_TIMEOUT_MS:30000}
+    anthropic-api-key: ${ANTHROPIC_API_KEY:}
+    anthropic-model: ${ANTHROPIC_MODEL:claude-sonnet-4-6}
+    anthropic-endpoint: ${ANTHROPIC_ENDPOINT:https://api.anthropic.com/v1/messages}
+    anthropic-max-tokens: ${ANTHROPIC_MAX_TOKENS:240}
+    anthropic-connect-timeout-ms: ${ANTHROPIC_CONNECT_TIMEOUT_MS:5000}
+    anthropic-read-timeout-ms: ${ANTHROPIC_READ_TIMEOUT_MS:30000}
+    voice-transcription-provider: ${VOICE_TRANSCRIPTION_PROVIDER:${AI_PROVIDER:openai}}
+    voice-transcription-model: ${VOICE_TRANSCRIPTION_MODEL:gpt-4o-mini-transcribe}
+    voice-transcription-endpoint: ${VOICE_TRANSCRIPTION_ENDPOINT:https://api.openai.com/v1/audio/transcriptions}
+    voice-speech-provider: ${VOICE_SPEECH_PROVIDER:${AI_PROVIDER:openai}}
+    voice-speech-model: ${VOICE_SPEECH_MODEL:}
+    voice-speech-voice: ${VOICE_SPEECH_VOICE:marin}
+    voice-speech-instructions: ${VOICE_SPEECH_INSTRUCTIONS:Speak in natural Mandarin with a young, clear, soft feminine voice that feels familiar to teenage listeners. Sound like a warm young peer, not an adult giving advice. Keep a natural slightly lively pace, varied emphasis and endings, and a light smile. Do not use a baby voice, forced cuteness, coyness, mature delivery, announcer, teacher, customer-service, or therapist tone.}
+    voice-speech-format: ${VOICE_SPEECH_FORMAT:mp3}
+    voice-speech-speed: ${VOICE_SPEECH_SPEED:1.06}
+    voice-speech-endpoint: ${VOICE_SPEECH_ENDPOINT:}
+    voice-speech-connect-timeout-ms: ${VOICE_SPEECH_CONNECT_TIMEOUT_MS:5000}
+    voice-speech-read-timeout-ms: ${VOICE_SPEECH_READ_TIMEOUT_MS:30000}
+    voice-realtime-provider: ${VOICE_REALTIME_PROVIDER:${AI_PROVIDER:openai}}
+    voice-realtime-model: ${VOICE_REALTIME_MODEL:gpt-realtime-2.1-mini}
+    voice-realtime-voice: ${VOICE_REALTIME_VOICE:marin}
+    voice-realtime-reasoning-effort: ${VOICE_REALTIME_REASONING_EFFORT:low}
+    voice-realtime-speed: ${VOICE_REALTIME_SPEED:1.06}
+    voice-realtime-client-secret-ttl-seconds: ${VOICE_REALTIME_CLIENT_SECRET_TTL_SECONDS:600}
+    voice-realtime-endpoint: ${VOICE_REALTIME_ENDPOINT:https://api.openai.com/v1/realtime/client_secrets}
+  mail:
+    smtp-host: ${SMTP_HOST:}
+    smtp-port: ${SMTP_PORT:587}
+    smtp-username: ${SMTP_USERNAME:}
+    smtp-password: ${SMTP_PASSWORD:}
+    smtp-from-address: ${SMTP_FROM_ADDRESS:}
+    smtp-from-name: ${SMTP_FROM_NAME:Minsi}
+    smtp-start-tls-enabled: ${SMTP_START_TLS_ENABLED:true}
+    smtp-ssl-enabled: ${SMTP_SSL_ENABLED:false}
+    smtp-connection-timeout-ms: ${SMTP_CONNECTION_TIMEOUT_MS:5000}
+    smtp-read-timeout-ms: ${SMTP_READ_TIMEOUT_MS:5000}
+    smtp-write-timeout-ms: ${SMTP_WRITE_TIMEOUT_MS:5000}
+  oauth:
+    callback-base-url: ${OAUTH_CALLBACK_BASE_URL:http://localhost:8080}
+    wechat:
+      app-id: ${WECHAT_APP_ID:}
+      app-secret: ${WECHAT_APP_SECRET:}
+    qq:
+      client-id: ${QQ_CLIENT_ID:}
+      client-secret: ${QQ_CLIENT_SECRET:}
+  app:
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000}
+    cookie-domain: ${COOKIE_DOMAIN:}
+    cookie-secure: ${COOKIE_SECURE:false}
+  security:
+    hash-salt: ${HASH_SALT:}
